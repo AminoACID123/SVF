@@ -5,6 +5,8 @@ project("SVF")
 # To support both in- and out-of-source builds,
 # we check for the presence of the add_llvm_loadable_module command.
 # - if this command is not present, we are building out-of-source
+set(CMAKE_C_COMPILER ${LLVM_DIR}/bin/clang)
+set(CMAKE_CXX_COMPILER ${LLVM_DIR}/bin/clang++)
 if(NOT COMMAND add_llvm_library)
     if (DEFINED LLVM_DIR)
         set(ENV{LLVM_DIR} "${LLVM_DIR}")
@@ -17,13 +19,13 @@ if(NOT COMMAND add_llvm_library)
         # add -std=gnu++14
         set(CMAKE_CXX_EXTENSIONS ON)
 
-        set(COMMON_FLAGS "-fPIC -Werror")
+        set(COMMON_FLAGS "-fPIC -Werror -frtti")
 
         if(CMAKE_BUILD_TYPE MATCHES "Debug")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -O0 -fno-rtti")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -O0")
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS} -O0")
         else()
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -O3 -fno-rtti")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -O3")
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS} -O3")
         endif()
 
@@ -63,6 +65,12 @@ else()
 	set(Z3_EXTRA_LINK_DIR )
 endif()
 
+
+# set(Boost_INCLUDE_DIR /home/xaz/boost/include)
+# set(Boost_LIBRARY_DIR /home/xaz/boost/lib)
+find_package(Boost COMPONENTS serialization)
+include_directories(${Boost_INCLUDE_DIR})
+link_directories(${Boost_LIBRARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include
                     ${CMAKE_CURRENT_BINARY_DIR}/include
                     ${Z3_INSTALLS})
