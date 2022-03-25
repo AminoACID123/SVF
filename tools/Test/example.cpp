@@ -2,22 +2,33 @@
 #include <vector>
 using namespace std;
 
-int  main()
+#define N 5
+void BubbleSort(vector<int>& vec)
 {
-	vector<int> vec;
-	int n = vec.size();
-	for (int i = 0; i < n; ++i)
+	for (int i = 0; i < N - 1; ++i)
 	{
-		cin >> vec[i];
-	}
-	
-	for (int i = 0; i < n - 1; ++i)
-	{
-		for (int j = i + 1; j < n; ++j)
+		for (int j = i + 1; j < N; ++j)
 		{
 			if (vec[i] > vec[j]) 
 				swap(vec[i], vec[j]);
 		}
 	}
+}
 
+
+int  main()
+{
+	int a;
+	vector<int> vec;
+	for (int i = 0; i < N; ++i)
+	{
+		cin >> a;
+		vec.push_back(a);
+	}
+	BubbleSort(vec);
+	for (int i = 0; i < N; ++i)
+	{
+		cout << vec[i] << endl;
+	}
+	return 0;
 }

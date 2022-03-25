@@ -33,6 +33,30 @@ using namespace llvm;
 using namespace SVF;
 
 map<string, Module*> modules;
+extern map<string, _DominatorTree*> DT;
+
+
+void buildDTs()
+{
+    for(auto iter = modules.begin(),e=modules.end();
+        iter!=e;iter++)
+    {
+        string m_name = iter->first;
+        auto F = iter->second->getFunctionList().begin();
+        auto Fe = iter->second->getFunctionList().end();
+        for(;F!=Fe;F++)
+        {
+            if(F->isDeclaration())
+                continue;
+            DominatorTreeWrapper dt(*F);
+            string f_name = F->getName().str();
+            llvm::outs() << m_name + ":" + f_name + " ";
+            dt.print(llvm::outs());
+        }
+
+    }
+
+}
 
 int main(int argc, char ** argv)
 {
@@ -41,33 +65,29 @@ int main(int argc, char ** argv)
     char **arg_value = new char*[argc];
     std::vector<std::string> moduleNameVec;
     moduleNameVec.push_back("example.bc");
-    //SVFUtil::processArguments(argc, argv, arg_num, arg_value, moduleNameVec);
-    //cl::ParseCommandLineOptions(arg_num, arg_value,
-    //                            "Source-Sink Bug Detector\n");
-    SVFModule* svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
+
     MyDomTreeNodeBase<BasicBlock> tmp(0,0);
     tmp.init();
 
+    SVFModule* svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
     auto F = svfModule->llvmFunBegin();
-    while((*F)->getName() != "main")
-    {
-        F++;
-    }
-    llvm::outs()<<(*F)->getName();
+    auto e = svfModule->llvmFunEnd();
     Module* mod = (*F)->getParent();
     modules[mod->getName().str()] = mod;
 
-    //PostDominatorTreeWrapper dt(**F);
-    //DominatorTreeWrapper dt(**F);
-    //dt.print(llvm::outs());
-    //DominatorTreeWrapper dt1(**F);
-    //dt1.print(llvm::outs());
+    buildDTs();
 
-    PostDominatorTree pdt(**F);
-    int s;
+    ofstream ofile("DT");
+    boost::archive::binary_oarchive oa(ofile, boost::archive::no_header);
+    oa << DT;
+    DT.clear();
+    ofile.close();
 
-    //ofstream file("/home/xaz/DT_new");
-    //boost::archive::binary_oarchive oa(file, boost::archive::no_header);
+    ifstream ifile("DT");
+    boost::archive::binary_iarchive ia(ifile, boost::archive::no_header);
+    ia >> DT;
+    buildDTs();
+
 
     //dt.print();
     return 0;

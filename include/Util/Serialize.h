@@ -1,7 +1,7 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
-//#include <boost/serialization/vector.hpp>
-//#include <boost/serialization/map.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/map.hpp>
 #include <llvm/IR/Dominators.h>
 #include <llvm/Analysis/PostDominators.h>
 #include <llvm/ADT/SmallVector.h>
@@ -61,24 +61,44 @@ private:
 class _TreeNode
 {
 public:
-    int TheBB;
-    int IDom;
-    vector<int> Children;
-    unsigned int level;
-    unsigned int DFSNumIn;
-    unsigned int DFSNumOut;
+    int TheBB; // BasicBlock
+    int IDom;   // Immediate Dominator
+    vector<int> Children; // Children Nodes
+    unsigned int level;   // Level in Tree
+    unsigned int DFSNumIn;  // DFS Order (In)
+    unsigned int DFSNumOut; // DFS Order (Out)
     _TreeNode(){}
     _TreeNode(DTNode& node);
+    template <class Archive>
+    void serialize(Archive &ar, const unsigned int version)
+    {  
+        ar & TheBB;
+        ar & IDom;
+        ar & Children;
+        ar & level;
+        ar & DFSNumIn;
+        ar & DFSNumOut;
+    }   
 };
+
 
 class _DominatorTree
 {
 public:
-    string m_name; 
-    string f_name;
-    vector<_TreeNode> nodes;
-    int root;
+    string m_name;  // Module name
+    string f_name;  // Function name
+    vector<_TreeNode> nodes;    // Tree nodes
+    int root;   // Root ID
     _DominatorTree() {}
+
+    template <class Archive>
+    void serialize(Archive &ar,const unsigned int version)
+    {  
+        ar & m_name;
+        ar & f_name;
+        ar & nodes;
+        ar & root;
+    }  
 };
 
 extern map<string, _DominatorTree*> DT;
@@ -97,29 +117,19 @@ public:
         auto iter = DT.find(key);
         if(iter == DT.end())
         {
+            llvm::outs() << "Calculating from scratch\n";
             recalculate(F);
             updateDFSNumbers();
             _save();
         }
         else
         {
+            llvm::outs() << "Loading from existing\n";
             _load(iter->second);
         }
     }
 
-    void setModules(map<string, Module*>* modules);
-
     friend class _TreeNode;
-
-    friend class boost::serialization::access;
- 
-	template<class Archive>
-	void serialize(Archive& ar, const unsigned int version)
-	{	
-
-		ar  & "hello"; 
-    }
-
 
 private:
     void _save();

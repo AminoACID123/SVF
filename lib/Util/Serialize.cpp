@@ -6,7 +6,7 @@ unsigned _IDom;
 unsigned _Level;
 unsigned _Children;
 unsigned _DFSNumIn;
-static unsigned _DFSNumOut;
+unsigned _DFSNumOut;
 
 
 map<string, _DominatorTree*> DT;
@@ -31,6 +31,8 @@ _TreeNode::_TreeNode(DTNode& node)
     DFSNumIn = node.getDFSNumIn();
     DFSNumOut = node.getDFSNumOut();
 }
+
+
 
 void DominatorTreeWrapper::_save() 
 {
@@ -116,7 +118,7 @@ void DominatorTreeWrapper:: _load(_DominatorTree* dt)
 
     Parent = f;
     DFSInfoValid = true;
-    SlowQueries = false;
+    SlowQueries = 0;
 
 
     // Load DomTreeNodeMap
