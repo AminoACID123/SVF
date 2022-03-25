@@ -32,7 +32,7 @@
 using namespace llvm;
 using namespace SVF;
 
-
+map<string, Module*> modules;
 
 int main(int argc, char ** argv)
 {
@@ -40,17 +40,31 @@ int main(int argc, char ** argv)
     int arg_num = 0;
     char **arg_value = new char*[argc];
     std::vector<std::string> moduleNameVec;
-    moduleNameVec.push_back("DTUpdate.bc");
+    moduleNameVec.push_back("example.bc");
     //SVFUtil::processArguments(argc, argv, arg_num, arg_value, moduleNameVec);
     //cl::ParseCommandLineOptions(arg_num, arg_value,
     //                            "Source-Sink Bug Detector\n");
     SVFModule* svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
     MyDomTreeNodeBase<BasicBlock> tmp(0,0);
-    llvm::outs() << tmp.getDFSNumInOff()<<"\n";
-    llvm::outs() << tmp.getDFSNumOutOff()<<"\n";
+    tmp.init();
+
     auto F = svfModule->llvmFunBegin();
+    while((*F)->getName() != "main")
+    {
+        F++;
+    }
     llvm::outs()<<(*F)->getName();
-    PostDominatorTreeWrapper dt(**F);
+    Module* mod = (*F)->getParent();
+    modules[mod->getName().str()] = mod;
+
+    //PostDominatorTreeWrapper dt(**F);
+    //DominatorTreeWrapper dt(**F);
+    //dt.print(llvm::outs());
+    //DominatorTreeWrapper dt1(**F);
+    //dt1.print(llvm::outs());
+
+    PostDominatorTree pdt(**F);
+    int s;
 
     //ofstream file("/home/xaz/DT_new");
     //boost::archive::binary_oarchive oa(file, boost::archive::no_header);

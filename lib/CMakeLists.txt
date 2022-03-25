@@ -23,7 +23,7 @@ file (GLOB SOURCES
 add_llvm_library(Svf STATIC ${SOURCES} LINK_LIBS Cudd ${Z3_LIBRARIES})
 
 link_directories(${CMAKE_BINARY_DIR}/lib/Cudd ${Z3_EXTRA_LINK_DIRS})
-
+set_source_files_properties(Util/Serialize.cpp PROPERTIES COMPILE_FLAGS "-frtti -fexceptions")
 
 if(DEFINED IN_SOURCE_BUILD)
     add_dependencies(Svf intrinsics_gen)

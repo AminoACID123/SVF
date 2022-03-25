@@ -1,13 +1,17 @@
 #include "Util/Serialize.h"
 
 // Offset of DomTreeNodeBase members
-static unsigned _TheBB;
-static unsigned _IDom;
-static unsigned _Level;
-static unsigned _Children;
-static unsigned _DFSNumIn;
+unsigned _TheBB;
+unsigned _IDom;
+unsigned _Level;
+unsigned _Children;
+unsigned _DFSNumIn;
 static unsigned _DFSNumOut;
 
+
+map<string, _DominatorTree*> DT;
+map<string, _DominatorTree*> PDT;
+extern map<string, Module*> modules;
 
 template <typename K, typename V>
 inline static V getValue(map<K, V>& _map, K _key)
@@ -30,9 +34,9 @@ _TreeNode::_TreeNode(DTNode& node)
 
 void DominatorTreeWrapper::_save() 
 {
-    _DominatorTree tree; 
-    tree.m_name = Parent->getParent()->getName().str();        
-    tree.f_name = Parent->getName().str();
+    _DominatorTree* tree = new _DominatorTree();
+    tree->m_name = Parent->getParent()->getName().str();        
+    tree->f_name = Parent->getName().str();
 
     block_i[NULL] = 0;
     int i = 1;
@@ -46,35 +50,30 @@ void DominatorTreeWrapper::_save()
     // Save all nodes
     for(auto iter = DomTreeNodes.begin(),e=DomTreeNodes.end();iter!=e;iter++)
     {
-        tree.nodes.push_back(*(iter->second));
-        tree.nodes.back().TheBB = getValue(block_i, iter->first);
+        tree->nodes.push_back(*(iter->second));
+        tree->nodes.back().TheBB = getValue(block_i, iter->first);
         auto IDom = iter->second->getIDom();
         if(IDom)
         {
-            tree.nodes.back().IDom = getValue(block_i, IDom->getBlock());
+            tree->nodes.back().IDom = getValue(block_i, IDom->getBlock());
         }
         else
         {
             // This is root
-            tree.nodes.back().IDom = -1;
-            tree.root = tree.nodes.back().TheBB;
+            tree->nodes.back().IDom = -1;
+            tree->root = tree->nodes.back().TheBB;
         }
         for(auto child=iter->second->begin(),end=iter->second->end();child!=end;child++)
         {
             int block = getValue(block_i, (*child)->getBlock());
-            tree.nodes.back().Children.push_back(block);
+            tree->nodes.back().Children.push_back(block);
         }
     }
 
-    tree.DFSInfoValid = DFSInfoValid;
-    tree.SlowQueries = SlowQueries;
+
+    DT[tree->m_name + ":" + tree->f_name] = tree;
 }
 
-
-void DominatorTreeWrapper:: setModules(map<string, Module*>* modules)
-{
-    this->modules = modules;
-}
 
 
 DTNode* DominatorTreeWrapper:: 
@@ -99,7 +98,7 @@ createNode(I2Bmap& i_block ,_TreeNode& node)
 
 void DominatorTreeWrapper:: _load(_DominatorTree* dt)
 {
-    auto mod = getValue(*modules, dt->m_name);
+    auto mod = getValue(modules, dt->m_name);
     auto f = mod->getFunction(dt->f_name);
     if(!f)
     {
@@ -116,8 +115,8 @@ void DominatorTreeWrapper:: _load(_DominatorTree* dt)
     }
 
     Parent = f;
-    DFSInfoValid = dt->DFSInfoValid;
-    SlowQueries = dt->SlowQueries;
+    DFSInfoValid = true;
+    SlowQueries = false;
 
 
     // Load DomTreeNodeMap

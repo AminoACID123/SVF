@@ -1,29 +1,23 @@
 #include <iostream>
+#include <vector>
 using namespace std;
 
 int  main()
 {
-	int a,b;
-	int c=1;
-	cin>>a;
-	cin>>b;
-	if (a>0)
-		cin>>c;
-	else
-		cin>>b;
-	if(a+b>0)
+	vector<int> vec;
+	int n = vec.size();
+	for (int i = 0; i < n; ++i)
 	{
-		cout<<"a";
-		return 1;
+		cin >> vec[i];
 	}
-	else if(a<1)
+	
+	for (int i = 0; i < n - 1; ++i)
 	{
-		cout<<"b";
-		return 2;
-	}
-	else
-	{
-		cout<<"c";
-		return 3;
+		for (int j = i + 1; j < n; ++j)
+		{
+			if (vec[i] > vec[j]) 
+				swap(vec[i], vec[j]);
 		}
+	}
+
 }

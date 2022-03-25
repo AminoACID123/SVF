@@ -5,8 +5,12 @@ project("SVF")
 # To support both in- and out-of-source builds,
 # we check for the presence of the add_llvm_loadable_module command.
 # - if this command is not present, we are building out-of-source
-set(CMAKE_C_COMPILER ${LLVM_DIR}/bin/clang)
-set(CMAKE_CXX_COMPILER ${LLVM_DIR}/bin/clang++)
+# set(CMAKE_C_COMPILER ${LLVM_DIR}/bin/clang)
+# set(CMAKE_CXX_COMPILER ${LLVM_DIR}/bin/clang++)
+
+set(LLVM_DIR /home/xaz/Documents/SVF/llvm-12.0.0.obj)
+set(Z3_DIR /home/xaz/Documents/SVF/z3.obj)
+set(CMAKE_EXPORT_COMPILE_COMMANDS YES)
 if(NOT COMMAND add_llvm_library)
     if (DEFINED LLVM_DIR)
         set(ENV{LLVM_DIR} "${LLVM_DIR}")
@@ -14,12 +18,12 @@ if(NOT COMMAND add_llvm_library)
     if (DEFINED ENV{LLVM_DIR})
         # We need to match the build environment for LLVM:
         # In particular, we need C++14 and the -fno-rtti flag
-        set(CMAKE_CXX_STANDARD 14)
-        set(CMAKE_CXX_STANDARD_REQUIRED ON)
+        # set(CMAKE_CXX_STANDARD 14)
+        # set(CMAKE_CXX_STANDARD_REQUIRED ON)
         # add -std=gnu++14
         set(CMAKE_CXX_EXTENSIONS ON)
 
-        set(COMMON_FLAGS "-fPIC -Werror -frtti")
+        set(COMMON_FLAGS "-fPIC -Werror")
 
         if(CMAKE_BUILD_TYPE MATCHES "Debug")
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -O0")
@@ -28,13 +32,13 @@ if(NOT COMMAND add_llvm_library)
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -O3")
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS} -O3")
         endif()
-
+	message("${CMAKE_CXX_FLAGS}\n\n")
         find_package(LLVM REQUIRED CONFIG)
         
         list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
         include(AddLLVM)
 
-        add_definitions(${LLVM_DEFINITIONS})
+        # add_definitions(${LLVM_DEFINITIONS})
         include_directories(SYSTEM ${LLVM_INCLUDE_DIRS})
 
         if (LLVM_LINK_LLVM_DYLIB)
@@ -68,9 +72,12 @@ endif()
 
 # set(Boost_INCLUDE_DIR /home/xaz/boost/include)
 # set(Boost_LIBRARY_DIR /home/xaz/boost/lib)
-find_package(Boost COMPONENTS serialization)
-include_directories(${Boost_INCLUDE_DIR})
-link_directories(${Boost_LIBRARY_DIR})
+find_package(Boost REQUIRED COMPONENTS serialization)
+include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
+
+
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include
                     ${CMAKE_CURRENT_BINARY_DIR}/include
                     ${Z3_INSTALLS})
@@ -86,6 +93,7 @@ endif()
 add_subdirectory(lib)
 add_subdirectory(tools)
 
+message("${CMAKE_CXX_FLAGS}\n\n")
 INSTALL(
     DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ ${CMAKE_CURRENT_BINARY_DIR}/include/ ${Z3_INSTALLS}
     COMPONENT devel

@@ -1,5 +1,5 @@
-//#include <boost/archive/binary_iarchive.hpp>
-//#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
 //#include <boost/serialization/vector.hpp>
 //#include <boost/serialization/map.hpp>
 #include <llvm/IR/Dominators.h>
@@ -15,7 +15,12 @@ using B2Imap = map<BasicBlock*, int>;
 using I2Bmap = map<int, BasicBlock*>;
 using DTNode = llvm::DomTreeNodeBase<BasicBlock>;
 
-
+extern unsigned _TheBB;
+extern unsigned _IDom;
+extern unsigned _Level;
+extern unsigned _Children;
+extern unsigned _DFSNumIn;
+extern unsigned _DFSNumOut;
 
 
 // Dummy class to get the offset of private members.
@@ -32,6 +37,18 @@ public:
     MyDomTreeNodeBase(NodeT *BB, MyDomTreeNodeBase *iDom)
       : TheBB(BB), IDom(iDom), Level(IDom ? IDom->Level + 1 : 0) {}
 
+    void init()
+    {
+        _TheBB = getTheBBOff();
+        _IDom = getIDomOff();
+        _Level = getLevelOff();
+        _Children = getChildrenOff();
+        _DFSNumIn = getDFSNumInOff();
+        _DFSNumOut = getDFSNumOutOff();
+
+    }
+
+private:
     unsigned getTheBBOff(){ return (char*)(&TheBB) - (char*)this; }
     unsigned getIDomOff(){ return (char*)(&IDom) - (char*)this; }
     unsigned getLevelOff(){ return (char*)(&Level) - (char*)this; }
@@ -61,14 +78,11 @@ public:
     string f_name;
     vector<_TreeNode> nodes;
     int root;
-    bool DFSInfoValid;
-    bool SlowQueries;
-    bool hasVirtualRoot;
     _DominatorTree() {}
 };
 
-static map<string, _DominatorTree*> DT;
-static map<string, _DominatorTree*> PDT;
+extern map<string, _DominatorTree*> DT;
+extern map<string, _DominatorTree*> PDT;
 
 
 class DominatorTreeWrapper: public DominatorTree
@@ -84,6 +98,7 @@ public:
         if(iter == DT.end())
         {
             recalculate(F);
+            updateDFSNumbers();
             _save();
         }
         else
@@ -95,17 +110,28 @@ public:
     void setModules(map<string, Module*>* modules);
 
     friend class _TreeNode;
+
+    friend class boost::serialization::access;
+ 
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int version)
+	{	
+
+		ar  & "hello"; 
+    }
+
+
 private:
     void _save();
     void _load(_DominatorTree* dt);
-    map<string, Module*>* modules;
+
     DTNode* createNode(I2Bmap& i_block ,_TreeNode& node);
     B2Imap block_i;
     I2Bmap i_block;
 
 };
 
-
+/*
 class PostDominatorTreeWrapper: public PostDominatorTree{
 public:
 
@@ -114,8 +140,8 @@ public:
         string m_name = F.getParent()->getName().str();
         string f_name = F.getName().str();
         string key = m_name + ":" + f_name;
-        auto iter = DT.find(key);
-        if(iter == DT.end())
+        auto iter = PDT.find(key);
+        if(iter == PDT.end())
         {
             recalculate(F);
             _save();
@@ -138,3 +164,4 @@ private:
 
 };
 
+*/

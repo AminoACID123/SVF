@@ -8,5 +8,6 @@ else()
     target_link_libraries( test Svf Cudd ${llvm_libs} ${Boost_LIBRARIES})
 
     set_target_properties( test PROPERTIES
-                           RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
+                           RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin 
+                           COMPILE_OPTIONS "-frtti")
 endif()
