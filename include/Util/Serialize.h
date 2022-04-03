@@ -45,7 +45,6 @@ public:
         _Children = getChildrenOff();
         _DFSNumIn = getDFSNumInOff();
         _DFSNumOut = getDFSNumOutOff();
-
     }
 
 private:

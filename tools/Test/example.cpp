@@ -5,6 +5,8 @@ using namespace std;
 #define N 5
 void BubbleSort(vector<int>& vec)
 {
+	if (vec[0])
+		return;
 	for (int i = 0; i < N - 1; ++i)
 	{
 		for (int j = i + 1; j < N; ++j)
@@ -13,6 +15,8 @@ void BubbleSort(vector<int>& vec)
 				swap(vec[i], vec[j]);
 		}
 	}
+	
+	
 }
 
 
