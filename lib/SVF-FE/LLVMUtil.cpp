@@ -393,3 +393,39 @@ void SVFUtil::processArguments(int argc, char **argv, int &arg_num, char **arg_v
     }
 }
 
+
+/// Get .bc file paths in bcFile
+void SVFUtil::processBcList(char* bcFile, std::vector<std::string> &moduleNameVec)
+{
+    std::ifstream file(bcFile);
+    std::string fname;
+    while(file >> fname)
+    {
+        moduleNameVec.push_back(fname);
+    }
+    file.close();
+}
+
+void SVFUtil:: excludeBlackList(char* blackList, std::vector<std::string> &moduleNameVec)
+{
+    std::ifstream file(blackList);
+    std::string fname;
+    std::set<std::string> files;
+    while(file >> fname)
+    {
+        files.insert(fname);
+    }
+    for(auto iter=moduleNameVec.begin(),e=moduleNameVec.end();iter!=e;)
+    {
+        if(files.find(*iter) != files.end())
+        {
+            moduleNameVec.erase(iter);
+        }
+        else
+        {
+            iter++;
+        }
+    }
+    file.close();
+}
+

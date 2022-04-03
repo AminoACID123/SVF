@@ -177,7 +177,7 @@ void LLVMModuleSet::loadModules(const std::vector<std::string> &moduleNameVec)
     // ------------------------------------------------------------------
     //
     cxts = std::make_unique<LLVMContext>();
-
+    std::ofstream blackList("blackList.txt");
     for (const std::string& moduleName : moduleNameVec) {
         SMDiagnostic Err;
         std::unique_ptr<Module> mod = parseIRFile(moduleName, Err, *cxts);
@@ -185,11 +185,13 @@ void LLVMModuleSet::loadModules(const std::vector<std::string> &moduleNameVec)
         {
             SVFUtil::errs() << "load module: " << moduleName << "failed!!\n\n";
             Err.print("SVFModuleLoader", SVFUtil::errs());
+            blackList << moduleName <<"\n";
             continue;
         }
         modules.emplace_back(*mod);
         owned_modules.emplace_back(std::move(mod));
     }
+    blackList.close();
 }
 
 void LLVMModuleSet::initialize()

@@ -636,6 +636,10 @@ bool isIRFile(const std::string &filename);
 void processArguments(int argc, char **argv, int &arg_num, char **arg_value,
                       std::vector<std::string> &moduleNameVec);
 
+void processBcList(char* bcFile, std::vector<std::string> &moduleNameVec);
+
+void excludeBlackList(char* blackList, std::vector<std::string> &moduleNameVec);
+
 } // End namespace SVFUtil
 
 } // End namespace SVF
