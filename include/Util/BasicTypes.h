@@ -60,8 +60,8 @@
 #include <llvm/Transforms/Utils/Local.h>	// for FindDbgAddrUses
 #include <llvm/IR/DebugInfo.h>
 
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/IR/CFG.h"
+#include <llvm/Analysis/LoopInfo.h>
+#include <llvm/IR/CFG.h>
 
 namespace SVF
 {
