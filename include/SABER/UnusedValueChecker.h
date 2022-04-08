@@ -43,7 +43,7 @@ class UnusedValueChecker : public SrcSnkDDA
 {
 
 public:
-    typedef Map<const SVFGNode*,const CallBlockNode*> SVFGNodeToCSIDMap;
+    typedef Map<const SVFGNode*,const Value*> SVFGNodeToVariableMap;
     typedef FIFOWorkList<const CallBlockNode*> CSWorkList;
     typedef ProgSlice::VFWorkList WorkList;
     typedef NodeBS SVFGNodeBS;
@@ -65,41 +65,31 @@ public:
     }
 
     /// We start from here
-    virtual bool runOnModule(SVFModule* module)
-    {
-        /// start analysis
-        for(auto iter = module->llvmFunBegin(),e=module->llvmFunEnd();iter!=e;++iter)
-        {
-            functionList.insert(*iter);
-        }
-        
-        analyze(module);
-        return false;
-    }
+    bool runOnModule(SVFModule* module);
+
+    void runOnFunction(Function* function);
+
+    /// Start analysis here
+    void analyze(SVFModule* module) override;
+
+    /// Initialize analysis
+    void initialize(SVFModule* module) override;
+
+    /// Finalize analysis
+    void finalize() override;
+
 
     /// Initialize sources and sinks
-    //@{
-    /// Initialize sources and sinks
-    virtual void initSrcs() override;
-    virtual void initSnks() override;
-    /// Whether the function is a heap allocator/reallocator (allocate memory)
-    virtual inline bool isSourceLikeFun(const SVFFunction* fun) override
-    {
-        return SaberCheckerAPI::getCheckerAPI()->isMemAlloc(fun);
-    }
-    /// Whether the function is a heap deallocator (free/release memory)
-    virtual inline bool isSinkLikeFun(const SVFFunction* fun) override
-    {
-        return SaberCheckerAPI::getCheckerAPI()->isMemDealloc(fun);
-    }
-    //@}
+    /// For each function
+    void initSrcs() override;
+    void initSnks() override;
 
 protected:
     /// Report leaks
     //@{
     virtual void reportBug(ProgSlice* slice) override;
-    void reportNeverFree(const SVFGNode* src);
-    void reportPartialLeak(const SVFGNode* src);
+    void reportNeverUse(const SVFGNode* src);
+    // void reportPartialLeak(const SVFGNode* src);
     //@}
 
     /// Validate test cases for regression test purpose
@@ -109,21 +99,21 @@ protected:
 
     /// Record a source to its callsite
     //@{
-    inline void addSrcToCSID(const SVFGNode* src, const CallBlockNode* cs)
+    inline void addSrcToVariableMap(const SVFGNode* src, const Value* var)
     {
-        srcToCSIDMap[src] = cs;
+        srcToVariableMap[src] = var;
     }
-    inline const CallBlockNode* getSrcCSID(const SVFGNode* src)
+    inline const Value* getSrcVariable(const SVFGNode* src)
     {
-        SVFGNodeToCSIDMap::iterator it =srcToCSIDMap.find(src);
-        assert(it!=srcToCSIDMap.end() && "source node not at a callsite??");
+        SVFGNodeToVariableMap::iterator it =srcToVariableMap.find(src);
+        assert(it!=srcToVariableMap.end() );
         return it->second;
     }
     //@}
 private:
-    SVFGNodeToCSIDMap srcToCSIDMap;
-    FunctionList functionList;
+    SVFGNodeToVariableMap srcToVariableMap;
     SVFModule* module;
+    bool initialized = false;
 };
 
 } // End namespace SVF

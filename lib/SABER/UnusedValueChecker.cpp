@@ -30,169 +30,207 @@
 #include "Util/Options.h"
 #include "SVF-FE/LLVMUtil.h"
 #include "SABER/UnusedValueChecker.h"
+#include "SVF-FE/PAGBuilder.h"
 
 using namespace SVF;
 using namespace SVFUtil;
 
 
+
+bool UnusedValueChecker::runOnModule(SVFModule* module)
+{
+    this->module = module;
+    analyze(module);
+    return false;
+}
+
+
+/// Initialize analysis
+void UnusedValueChecker::initialize(SVFModule* module)
+{
+    PAGBuilder builder;
+    PAG* pag = builder.build(module);
+
+    AndersenWaveDiff* ander = AndersenWaveDiff::createAndersenWaveDiff(pag);
+    svfg =  memSSA.buildFullSVFG(ander);
+    setGraph(memSSA.getSVFG());
+    ptaCallGraph = ander->getPTACallGraph();
+    //AndersenWaveDiff::releaseAndersenWaveDiff();
+    /// allocate control-flow graph branch conditions
+    getPathAllocator()->allocate(getPAG()->getModule());
+    
+    pag->dump("pag");
+    pag->getICFG()->dump("icfg");
+    svfg->dump("svfg");
+
+    initSrcs();
+    initSnks();
+}
+
+/*
+void UnusedValueChecker::analyze(SVFModule* module)
+{
+
+    initialize(module);
+
+    ContextCond::setMaxCxtLen(Options::CxtLimit);
+
+    for (SVFGNodeSetIter iter = sourcesBegin(), eiter = sourcesEnd();
+            iter != eiter; ++iter)
+    {
+        setCurSlice(*iter);
+
+        DBOUT(DGENERAL, outs() << "Analysing slice:" << (*iter)->getId() << ")\n");
+        ContextCond cxt;
+        DPIm item((*iter)->getId(),cxt);
+        forwardTraverse(item);
+
+        /// do not consider there is bug when reaching a global SVFGNode
+        /// if we touch a global, then we assume the client uses this memory until the program exits.
+        if (getCurSlice()->isReachGlobal())
+        {
+            DBOUT(DSaber, outs() << "Forward analysis reaches globals for slice:" << (*iter)->getId() << ")\n");
+        }
+        else
+        {
+            DBOUT(DSaber, outs() << "Forward process for slice:" << (*iter)->getId() << " (size = " << getCurSlice()->getForwardSliceSize() << ")\n");
+
+            for (SVFGNodeSetIter sit = getCurSlice()->sinksBegin(), esit =
+                        getCurSlice()->sinksEnd(); sit != esit; ++sit)
+            {
+                ContextCond cxt;
+                DPIm item((*sit)->getId(),cxt);
+                backwardTraverse(item);
+            }
+
+            DBOUT(DSaber, outs() << "Backward process for slice:" << (*iter)->getId() << " (size = " << getCurSlice()->getBackwardSliceSize() << ")\n");
+
+            if(Options::DumpSlice)
+                annotateSlice(_curSlice);
+
+            if(_curSlice->AllPathReachableSolve()== true)
+                _curSlice->setAllReachable();
+
+            DBOUT(DSaber, outs() << "Guard computation for slice:" << (*iter)->getId() << ")\n");
+        }
+
+        reportBug(getCurSlice());
+    }
+
+    finalize();
+}
+*/
+
+void UnusedValueChecker::finalize()
+{
+    
+}
+
 /*!
  * Initialize sources
  */
 void UnusedValueChecker::initSrcs()
-{
-    
+{ 
     PAG* pag = getPAG();
-    ICFG* icfg = pag->getICFG();
-    const SVFG* svfg = getSVFG();
+    SVFG* svfg = (SVFG*)getSVFG();
     MemSSA* mssa = svfg->getMSSA();
     
     //pag->getInstPAGEdgeList();
     
-    
-    
-    for(auto fit=functionList.begin(),feit=functionList.end();fit!=feit;++fit)
-    {
-        
-        const SVFFunction* f =  module->getSVFFunction(*fit);
-        FunEntryBlockNode* entry = icfg->getFunEntryBlockNode(f);
-        PAG::PAGEdgeList entryEdges = pag->getInstPAGEdgeList(entry);
-        for(auto it = entryEdges.begin(),e=entryEdges.end();it!=e;++it)
+    for(auto fit=module->llvmFunBegin(),fe=module->llvmFunEnd();fit!=fe;++fit)
+    { 
+        SVFFunction func(*fit);
+        SVFG::FormalINSVFGNodeSet ns = svfg->getFormalINSVFGNodes(&func);
+        for(auto nit=svfg->getVFGNodeBegin(&func),neit=svfg->getVFGNodeEnd(&func);nit!=neit;++nit)
         {
-            svfg->getStmtVFGNode(*it);
-        }
-
-
-
-        for(auto bit=(*fit)->getBasicBlockList().begin(),beit=(*fit)->getBasicBlockList().end();bit!=beit;++bit)
-        {
-            for(auto iit=bit->getInstList().begin(),ieit=bit->getInstList().end();iit!=ieit;++iit)
+            VFGNode* node = *nit;
+            /*
+            // Entry CHI
+            if(FormalINSVFGNode::classof(node))
             {
-                icfg->getIntraBlockNode(&(*iit));
-                pag->getInstPAGEdgeList()
+                addToSources(node);
             }
-        }
-    }
-
-    for(PAG::CSToRetMap::iterator it = pag->getCallSiteRets().begin(),
-            eit = pag->getCallSiteRets().end(); it!=eit; ++it)
-    {
-        const RetBlockNode* cs = it->first;
-        /// if this callsite return reside in a dead function then we do not care about its leaks
-        /// for example instruction p = malloc is in a dead function, then program won't allocate this memory
-        if(isPtrInDeadFunction(cs->getCallSite()))
-            continue;
-
-        PTACallGraph::FunctionSet callees;
-        getCallgraph()->getCallees(cs->getCallBlockNode(),callees);
-        for(PTACallGraph::FunctionSet::const_iterator cit = callees.begin(), ecit = callees.end(); cit!=ecit; cit++)
-        {
-            const SVFFunction* fun = *cit;
-            if (isSourceLikeFun(fun))
+            // Call CHI
+            else if(ActualOUTSVFGNode::classof(node))
             {
-                CSWorkList worklist;
-                SVFGNodeBS visited;
-                worklist.push(it->first->getCallBlockNode());
-                while (!worklist.empty())
+                addToSources(node);
+            }
+            else */if(StmtSVFGNode::classof(node))
+            {
+                const PAGEdge* pagEdge = ((StmtSVFGNode*)node)->getPAGEdge();
+                const Value* var = pagEdge->getDstNode()->getValue();
+                addSrcToVariableMap(node, var);
+                if(mssa->hasCHI(pagEdge))
                 {
-                    const CallBlockNode* cs = worklist.pop();
-                    const RetBlockNode* retBlockNode = icfg->getRetBlockNode(cs->getCallSite());
-                    const PAGNode* pagNode = pag->getCallSiteRet(retBlockNode);
-                    const SVFGNode* node = getSVFG()->getDefSVFGNode(pagNode);
-                    if (visited.test(node->getId()) == 0)
-                        visited.set(node->getId());
-                    else
-                        continue;
-
-                    CallSiteSet csSet;
-                    // if this node is in an allocation wrapper, find all its call nodes
-                    if (isInAWrapper(node, csSet))
-                    {
-                        for (CallSiteSet::iterator it = csSet.begin(), eit =
-                                    csSet.end(); it != eit; ++it)
-                        {
-                            worklist.push(*it);
-                        }
-                    }
-                    // otherwise, this is the source we are interested
-                    else
-                    {
-                        // exclude sources in dead functions
-                        if (isPtrInDeadFunction(cs->getCallSite()) == false)
-                        {
-                            addToSources(node);
-                            addSrcToCSID(node, cs);
-                        }
-                    }
+                    addToSources(node);
                 }
             }
         }
     }
-
 }
+
 
 /*!
  * Initialize sinks
  */
 void UnusedValueChecker::initSnks()
 {
-
     PAG* pag = getPAG();
-
-    for(PAG::CSToArgsListMap::iterator it = pag->getCallSiteArgsMap().begin(),
-            eit = pag->getCallSiteArgsMap().end(); it!=eit; ++it)
-    {
-
-        PTACallGraph::FunctionSet callees;
-        getCallgraph()->getCallees(it->first,callees);
-        for(PTACallGraph::FunctionSet::const_iterator cit = callees.begin(), ecit = callees.end(); cit!=ecit; cit++)
+    SVFG* svfg = (SVFG*)getSVFG();
+    MemSSA* mssa = svfg->getMSSA();
+    
+    //pag->getInstPAGEdgeList();
+    
+    for(auto fit=module->llvmFunBegin(),fe=module->llvmFunEnd();fit!=fe;++fit)
+    { 
+        SVFFunction func(*fit);
+        SVFG::FormalINSVFGNodeSet ns = svfg->getFormalINSVFGNodes(&func);
+        for(auto nit=svfg->getVFGNodeBegin(&func),neit=svfg->getVFGNodeEnd(&func);nit!=neit;++nit)
         {
-            const SVFFunction* fun = *cit;
-			if (isSinkLikeFun(fun)) {
-				PAG::PAGNodeList &arglist = it->second;
-				assert(!arglist.empty()	&& "no actual parameter at deallocation site?");
-				/// we only choose pointer parameters among all the actual parameters
-				for (PAG::PAGNodeList::const_iterator ait = arglist.begin(),
-						aeit = arglist.end(); ait != aeit; ++ait) {
-					const PAGNode *pagNode = *ait;
-					if (pagNode->isPointer()) {
-						const SVFGNode *snk = getSVFG()->getActualParmVFGNode(pagNode, it->first);
-						addToSinks(snk);
-					}
-				}
-			}
+            VFGNode* node = *nit;
+            if(StmtSVFGNode::classof(node))
+            {
+                const PAGEdge* pagEdge = ((StmtSVFGNode*)node)->getPAGEdge();
+
+                if(mssa->hasMU(pagEdge))
+                {
+                    addToSinks(node);
+                }
+            }
         }
     }
 }
 
 
-void UnusedValueChecker::reportNeverFree(const SVFGNode* src)
+void UnusedValueChecker::reportNeverUse(const SVFGNode* src)
 {
-    const CallBlockNode* cs = getSrcCSID(src);
-    SVFUtil::errs() << bugMsg1("\t NeverFree :") <<  " memory allocation at : ("
-                    << getSourceLoc(cs->getCallSite()) << ")\n";
+    const Value* var = getSrcVariable(src);
+    SVFUtil::errs() << bugMsg1("\t NeverUse :") <<  " Value assigned but never used : ("
+                    << getSourceLoc(var) << ")\n";
 }
-
+/*
 void UnusedValueChecker::reportPartialLeak(const SVFGNode* src)
 {
     const CallBlockNode* cs = getSrcCSID(src);
     SVFUtil::errs() << bugMsg2("\t PartialLeak :") <<  " memory allocation at : ("
                     << getSourceLoc(cs->getCallSite()) << ")\n";
 }
-
+*/
 void UnusedValueChecker::reportBug(ProgSlice* slice)
 {
 
     if(isAllPathReachable() == false && isSomePathReachable() == false)
     {
-        reportNeverFree(slice->getSource());
+        reportNeverUse(slice->getSource());
     }
+    /*
     else if (isAllPathReachable() == false && isSomePathReachable() == true)
     {
         reportPartialLeak(slice->getSource());
         SVFUtil::errs() << "\t\t conditional free path: \n" << slice->evalFinalCond() << "\n";
         slice->annotatePaths();
     }
-
+    */
 }
 
 

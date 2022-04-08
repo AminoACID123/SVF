@@ -30,12 +30,16 @@
 #include "SABER/LeakChecker.h"
 #include "SABER/FileChecker.h"
 #include "SABER/DoubleFreeChecker.h"
+#include "SABER/UnusedValueChecker.h"
 
 using namespace llvm;
 using namespace SVF;
 
 static llvm::cl::opt<std::string> InputFilename(cl::Positional,
         llvm::cl::desc("<input bitcode>"), llvm::cl::init("-"));
+
+static llvm::cl::opt<bool> UNUSEDVALUECHECKER("unused value", llvm::cl::init(true),
+                                       llvm::cl::desc("Unused Value Detection"));
 
 static llvm::cl::opt<bool> LEAKCHECKER("leak", llvm::cl::init(false),
                                        llvm::cl::desc("Memory Leak Detection"));
@@ -58,18 +62,29 @@ int main(int argc, char ** argv)
 
     SVFModule* svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
 
-    LeakChecker *saber;
+    
 
-    if(LEAKCHECKER)
-        saber = new LeakChecker();
-    else if(FILECHECKER)
-        saber = new FileChecker();
-    else if(DFREECHECKER)
-        saber = new DoubleFreeChecker();
+    if(UNUSEDVALUECHECKER)
+    {
+        UnusedValueChecker* saber = new UnusedValueChecker();
+        saber->runOnModule(svfModule);
+    }
     else
-        saber = new LeakChecker();  // if no checker is specified, we use leak checker as the default one.
+    {
+        LeakChecker *saber;
+        if(LEAKCHECKER)
+            saber = new LeakChecker();
+        else if(FILECHECKER)
+            saber = new FileChecker();
+        else if(DFREECHECKER)
+            saber = new DoubleFreeChecker();
+        else
+            saber = new LeakChecker();  // if no checker is specified, we use leak checker as the default one.
 
-    saber->runOnModule(svfModule);
+        saber->runOnModule(svfModule);
+
+    }
+
 
     return 0;
 
