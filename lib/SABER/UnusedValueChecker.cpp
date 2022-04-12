@@ -31,10 +31,10 @@
 #include "SVF-FE/LLVMUtil.h"
 #include "SABER/UnusedValueChecker.h"
 #include "SVF-FE/PAGBuilder.h"
+#include <fstream>
 
 using namespace SVF;
 using namespace SVFUtil;
-
 
 
 bool UnusedValueChecker::runOnModule(SVFModule* module)
@@ -50,19 +50,22 @@ void UnusedValueChecker::initialize(SVFModule* module)
 {
     PAGBuilder builder;
     PAG* pag = builder.build(module);
-
     AndersenWaveDiff* ander = AndersenWaveDiff::createAndersenWaveDiff(pag);
     svfg =  memSSA.buildFullSVFG(ander);
+
     setGraph(memSSA.getSVFG());
     ptaCallGraph = ander->getPTACallGraph();
     //AndersenWaveDiff::releaseAndersenWaveDiff();
     /// allocate control-flow graph branch conditions
     getPathAllocator()->allocate(getPAG()->getModule());
     
+
+    std::error_code EC;
+    llvm::raw_fd_ostream fout("mssa.txt", EC);
     pag->dump("pag");
     pag->getICFG()->dump("icfg");
     svfg->dump("svfg");
-
+    svfg->getMSSA()->dumpMSSA(fout);
     initSrcs();
     initSnks();
 }
@@ -139,9 +142,14 @@ void UnusedValueChecker::initSrcs()
     
     for(auto fit=module->llvmFunBegin(),fe=module->llvmFunEnd();fit!=fe;++fit)
     { 
-        SVFFunction func(*fit);
-        SVFG::FormalINSVFGNodeSet ns = svfg->getFormalINSVFGNodes(&func);
-        for(auto nit=svfg->getVFGNodeBegin(&func),neit=svfg->getVFGNodeEnd(&func);nit!=neit;++nit)
+
+        const SVFFunction* func = module->getSVFFunction(*fit);
+        if(!svfg->hasVFGNodes(func))
+        {
+            continue;
+        }
+
+        for(auto nit=svfg->getVFGNodeBegin(func),neit=svfg->getVFGNodeEnd(func);nit!=neit;++nit)
         {
             VFGNode* node = *nit;
             /*
@@ -158,11 +166,15 @@ void UnusedValueChecker::initSrcs()
             else */if(StmtSVFGNode::classof(node))
             {
                 const PAGEdge* pagEdge = ((StmtSVFGNode*)node)->getPAGEdge();
-                const Value* var = pagEdge->getDstNode()->getValue();
-                addSrcToVariableMap(node, var);
+
                 if(mssa->hasCHI(pagEdge))
                 {
-                    addToSources(node);
+                    const Value* var = pagEdge->getInst();
+                    if(pagEdge->getInst()->getMetadata("dbg"))
+                    {
+                        addToSources(node);
+                        addSrcToVariableMap(node, var);
+                    }
                 }
             }
         }
@@ -183,9 +195,13 @@ void UnusedValueChecker::initSnks()
     
     for(auto fit=module->llvmFunBegin(),fe=module->llvmFunEnd();fit!=fe;++fit)
     { 
-        SVFFunction func(*fit);
-        SVFG::FormalINSVFGNodeSet ns = svfg->getFormalINSVFGNodes(&func);
-        for(auto nit=svfg->getVFGNodeBegin(&func),neit=svfg->getVFGNodeEnd(&func);nit!=neit;++nit)
+        const SVFFunction* func = module->getSVFFunction(*fit);
+        if(!svfg->hasVFGNodes(func))
+        {
+            continue;
+        }
+
+        for(auto nit=svfg->getVFGNodeBegin(func),neit=svfg->getVFGNodeEnd(func);nit!=neit;++nit)
         {
             VFGNode* node = *nit;
             if(StmtSVFGNode::classof(node))
@@ -195,6 +211,10 @@ void UnusedValueChecker::initSnks()
                 if(mssa->hasMU(pagEdge))
                 {
                     addToSinks(node);
+                }
+                else if(FormalOUTSVFGNode::classof(node))
+                {
+                    addToSources(node);
                 }
             }
         }

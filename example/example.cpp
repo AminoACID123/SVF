@@ -1,11 +1,12 @@
 #include <iostream>
 using namespace std;
 
-int A = 1;
 
-int foo(int a, int b)
+int add(int& a, int& b)
 {
 	int c;
+	a++;
+	b++;
 	c = a + b;
 	return c;
 }
@@ -13,9 +14,20 @@ int foo(int a, int b)
 
 int main()
 {
-	int x,y,z;
-	cin>>x;
-	cin>>y;
-	z = foo(x,y);
+	int x,y,z,a;
+	x = 1;
+	if(y>3)
+		add(x,z);
+	else
+		add(x,y);
+	y = 2;
+	a = x;
+	z = add(x,y);
 	return z;
 }
+
+
+
+
+
+

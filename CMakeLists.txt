@@ -23,7 +23,7 @@ if(NOT COMMAND add_llvm_library)
         # add -std=gnu++14
         set(CMAKE_CXX_EXTENSIONS ON)
 
-        set(COMMON_FLAGS "-fPIC -Werror")
+        set(COMMON_FLAGS "-fPIC")
 
         if(CMAKE_BUILD_TYPE MATCHES "Debug")
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS} -O0")

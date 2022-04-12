@@ -37,24 +37,12 @@ namespace SVF
 {
 
 /*!
- * Static Memory Leak Detector
+ * Static Unused Value Checker
  */
 class UnusedValueChecker : public SrcSnkDDA
 {
 
 public:
-    typedef Map<const SVFGNode*,const Value*> SVFGNodeToVariableMap;
-    typedef FIFOWorkList<const CallBlockNode*> CSWorkList;
-    typedef ProgSlice::VFWorkList WorkList;
-    typedef NodeBS SVFGNodeBS;
-    typedef set<llvm::Function*> FunctionList;
-    enum UNUSED_TYPE
-    {
-        NEVER_USED,
-        CONSECUTIVE_ASSIGN,
-        INIT_REASSIGN
-    };
-
     /// Constructor
     UnusedValueChecker()
     {
@@ -64,13 +52,8 @@ public:
     {
     }
 
-    /// We start from here
+    /// Analyze module
     bool runOnModule(SVFModule* module);
-
-    void runOnFunction(Function* function);
-
-    /// Start analysis here
-    void analyze(SVFModule* module) override;
 
     /// Initialize analysis
     void initialize(SVFModule* module) override;
@@ -83,7 +66,17 @@ public:
     /// For each function
     void initSrcs() override;
     void initSnks() override;
-
+    typedef Map<const SVFGNode*,const Value*> SVFGNodeToVariableMap;
+    typedef FIFOWorkList<const CallBlockNode*> CSWorkList;
+    typedef ProgSlice::VFWorkList WorkList;
+    typedef NodeBS SVFGNodeBS;
+    typedef set<llvm::Function*> FunctionList;
+    enum UNUSED_TYPE
+    {
+        NEVER_USED,
+        CONSECUTIVE_ASSIGN,
+        INIT_REASSIGN
+    };
 protected:
     /// Report leaks
     //@{
