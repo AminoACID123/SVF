@@ -130,7 +130,7 @@ bool ProgSlice::isSatisfiableForPairs()
     return true;
 }
 
-const CallBlockNode* ProgSlice::getCallSite(const SVFGEdge* edge) const
+const CallICFGNode* ProgSlice::getCallSite(const SVFGEdge* edge) const
 {
     assert(edge->isCallVFGEdge() && "not a call svfg edge?");
     if(const CallDirSVFGEdge* callEdge = SVFUtil::dyn_cast<CallDirSVFGEdge>(edge))
@@ -138,7 +138,7 @@ const CallBlockNode* ProgSlice::getCallSite(const SVFGEdge* edge) const
     else
         return getSVFG()->getCallSite(SVFUtil::cast<CallIndSVFGEdge>(edge)->getCallSiteId());
 }
-const CallBlockNode* ProgSlice::getRetSite(const SVFGEdge* edge) const
+const CallICFGNode* ProgSlice::getRetSite(const SVFGEdge* edge) const
 {
     assert(edge->isRetVFGEdge() && "not a return svfg edge?");
     if(const RetDirSVFGEdge* callEdge = SVFUtil::dyn_cast<RetDirSVFGEdge>(edge))
@@ -167,7 +167,10 @@ std::string ProgSlice::evalFinalCond() const
     {
         Condition* atom = pathAllocator->getCond(*it);
         const Instruction* tinst = pathAllocator->getCondInst(atom);
-        locations.insert(getSourceLoc(tinst));
+        if(pathAllocator->isNegCond(atom))
+            locations.insert(getSourceLoc(tinst)+"|False");
+        else
+            locations.insert(getSourceLoc(tinst)+"|True");
     }
     /// print leak path after eliminating duplicated element
     for(Set<std::string>::iterator iter = locations.begin(), eiter = locations.end();
@@ -194,10 +197,16 @@ void ProgSlice::annotatePaths()
     {
         Condition* atom = pathAllocator->getCond(*it);
         const Instruction* tinst = pathAllocator->getCondInst(atom);
-        if(const BranchInst* br = SVFUtil::dyn_cast<BranchInst>(tinst))
+        if (ICFGNode *icfgNode = pathAllocator->getICFG()->getICFGNode(tinst))
         {
-            annotator.annotateFeasibleBranch(br,0);
-            annotator.annotateFeasibleBranch(br,1);
+            for (const auto &svfStmt: icfgNode->getSVFStmts())
+            {
+                if (const BranchStmt *branchStmt = SVFUtil::dyn_cast<BranchStmt>(svfStmt))
+                {
+                    annotator.annotateFeasibleBranch(branchStmt,0);
+                    annotator.annotateFeasibleBranch(branchStmt,1);
+                }
+            }
         }
     }
 }

@@ -32,7 +32,8 @@
 
 #include "Util/SVFModule.h"
 #include "SVF-FE/DataFlowUtil.h"
-#include "Util/Conditions.h"
+#include "SVF-FE/BasicTypes.h"
+#include "Util/BDDExpr.h"
 #include "Util/WorkList.h"
 #include "Graphs/SVFG.h"
 
@@ -48,7 +49,7 @@ class PathCondAllocator
 
 public:
 
-    typedef CondExpr Condition;   /// z3 condition
+    typedef BDDExprManager::BDDExpr Condition;   /// z3 condition
 
     typedef Map<u32_t,Condition*> CondPosMap;		///< map a branch to its Condition
     typedef Map<const BasicBlock*, CondPosMap > BBCondMap;	// map bb to a Condition
@@ -59,9 +60,8 @@ public:
 
 
     /// Constructor
-    PathCondAllocator(): condMgr(CondManager::getCondMgr())
-    {
-    }
+    PathCondAllocator();
+
     /// Destructor
     virtual ~PathCondAllocator()
     {
@@ -133,10 +133,16 @@ public:
     {
         return condMgr->getCondInst(cond);
     }
-    inline void setCondInst(const CondExpr* cond, const Instruction* inst){
+    inline void setCondInst(const Condition* cond, const Instruction* inst)
+    {
         condMgr->setCondInst(cond, inst);
     }
     //@}
+
+    bool isNegCond(const Condition *condition)
+    {
+        return condMgr->isNegCond(condition);
+    }
 
     /// Get dominators
     inline DominatorTree* getDT(const Function* fun)
@@ -185,17 +191,25 @@ public:
     void printPathCond();
 
     /// whether condition is satisfiable
-    inline bool isSatisfiable(Condition* condition){
+    inline bool isSatisfiable(Condition* condition)
+    {
         return condMgr->isSatisfiable(condition);
     }
 
     /// whether condition is satisfiable for all possible boolean guards
-    inline bool isAllPathReachable(Condition* condition){
+    inline bool isAllPathReachable(Condition* condition)
+    {
         return condMgr->isAllPathReachable(condition);
     }
 
-    bool isEquivalentBranchCond(const Condition *lhs, const Condition *rhs) const{
+    bool isEquivalentBranchCond(const Condition *lhs, const Condition *rhs) const
+    {
         return condMgr->isEquivalentBranchCond(lhs, rhs);
+    }
+
+    inline ICFG* getICFG() const
+    {
+        return PAG::getPAG()->getICFG();
     }
 
 private:
@@ -219,9 +233,9 @@ private:
     /// Evaluate loop exit branch
     Condition* evaluateLoopExitBranch(const BasicBlock * bb, const BasicBlock *succ);
     /// Return branch condition after evaluating test null like expression
-    Condition* evaluateTestNullLikeExpr(const BranchInst* brInst, const BasicBlock *succ);
+    Condition* evaluateTestNullLikeExpr(const BranchStmt* branchStmt, const BasicBlock *succ);
     /// Return condition when there is a branch calls program exit
-    Condition* evaluateProgExit(const BranchInst* brInst, const BasicBlock *succ);
+    Condition* evaluateProgExit(const BranchStmt* branchStmt, const BasicBlock *succ);
     /// Collect basic block contains program exit function call
     void collectBBCallingProgExit(const BasicBlock& bb);
     bool isBBCallsProgExit(const BasicBlock* bb);
@@ -265,8 +279,11 @@ private:
     }
     //@}
 
+
+
     /// Release memory
-    void destroy(){
+    void destroy()
+    {
 
     }
 
@@ -276,7 +293,7 @@ private:
     const SVFGNode* curEvalSVFGNode{};			///< current llvm value to evaluate branch condition when computing guards
 
 protected:
-    CondManager* condMgr;		///< z3 manager
+    BDDExprManager* condMgr;		///< z3 manager
     BBCondMap bbConds;						///< map basic block to its successors/predecessors branch conditions
 
 };

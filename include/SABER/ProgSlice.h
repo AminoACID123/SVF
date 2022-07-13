@@ -162,8 +162,8 @@ public:
 
     /// Get callsite ID and get returnsiteID from SVFGEdge
     //@{
-    const CallBlockNode* getCallSite(const SVFGEdge* edge) const;
-    const CallBlockNode* getRetSite(const SVFGEdge* edge) const;
+    const CallICFGNode* getCallSite(const SVFGEdge* edge) const;
+    const CallICFGNode* getRetSite(const SVFGEdge* edge) const;
     //@}
 
     /// Condition operations
@@ -253,7 +253,8 @@ protected:
     }
     //@}
 
-    inline bool isEquivalentBranchCond(const Condition *lhs, const Condition *rhs) const {
+    inline bool isEquivalentBranchCond(const Condition *lhs, const Condition *rhs) const
+    {
         return pathAllocator->isEquivalentBranchCond(lhs, rhs);
     };
 

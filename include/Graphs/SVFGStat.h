@@ -80,9 +80,9 @@ public:
     {
 
     }
-    virtual void performStat();
+    virtual void performStat() override;
 
-    virtual void printStat();
+    virtual void printStat(std::string str = "") override;
 
 private:
     MemSSA* mssa;
@@ -100,60 +100,60 @@ public:
 
     virtual ~SVFGStat() {}
 
-    virtual void performStat();
+    virtual void performStat() override;
 
-    virtual void printStat();
+    virtual void printStat(std::string str = "") override;
 
     virtual void performSCCStat(SVFGEdgeSet insensitiveCalRetEdges);
 
     void dirVFEdgeStart()
     {
-        connectDirSVFGEdgeTimeStart = CLOCK_IN_MS();
+        connectDirSVFGEdgeTimeStart = PTAStat::getClk(true);
     }
 
     void dirVFEdgeEnd()
     {
-        connectDirSVFGEdgeTimeEnd = CLOCK_IN_MS();
+        connectDirSVFGEdgeTimeEnd = PTAStat::getClk(true);
     }
 
     void indVFEdgeStart()
     {
-        connectIndSVFGEdgeTimeStart = CLOCK_IN_MS();
+        connectIndSVFGEdgeTimeStart = PTAStat::getClk(true);
     }
 
     void indVFEdgeEnd()
     {
-        connectIndSVFGEdgeTimeEnd = CLOCK_IN_MS();
+        connectIndSVFGEdgeTimeEnd = PTAStat::getClk(true);
     }
 
     void TLVFNodeStart()
     {
-        addTopLevelNodeTimeStart = CLOCK_IN_MS();
+        addTopLevelNodeTimeStart = PTAStat::getClk(true);
     }
 
     void TLVFNodeEnd()
     {
-        addTopLevelNodeTimeEnd = CLOCK_IN_MS();
+        addTopLevelNodeTimeEnd = PTAStat::getClk(true);
     }
 
     void ATVFNodeStart()
     {
-        addAddrTakenNodeTimeStart = CLOCK_IN_MS();
+        addAddrTakenNodeTimeStart = PTAStat::getClk(true);
     }
 
     void ATVFNodeEnd()
     {
-        addAddrTakenNodeTimeEnd = CLOCK_IN_MS();
+        addAddrTakenNodeTimeEnd = PTAStat::getClk(true);
     }
 
     void sfvgOptStart()
     {
-        svfgOptTimeStart = CLOCK_IN_MS();
+        svfgOptTimeStart = PTAStat::getClk(true);
     }
 
     void sfvgOptEnd()
     {
-        svfgOptTimeEnd = CLOCK_IN_MS();
+        svfgOptTimeEnd = PTAStat::getClk(true);
     }
 
 private:
@@ -205,13 +205,13 @@ private:
 
     int avgInDegree;	///< average in degrees of SVFG nodes.
     int avgOutDegree;	///< average out degrees of SVFG nodes.
-    unsigned maxInDegree;	///< max in degrees of SVFG nodes.
-    unsigned maxOutDegree;	///< max out degrees of SVFG nodes.
+    u32_t maxInDegree;	///< max in degrees of SVFG nodes.
+    u32_t maxOutDegree;	///< max out degrees of SVFG nodes.
 
     int avgIndInDegree;	///< average indirect in degrees of SVFG nodes.
     int avgIndOutDegree;	///< average indirect out degrees of SVFG nodes.
-    int maxIndInDegree;	///< max indirect in degrees of SVFG nodes.
-    int maxIndOutDegree;	///< max indirect out degrees of SVFG nodes.
+    u32_t maxIndInDegree;	///< max indirect in degrees of SVFG nodes.
+    u32_t maxIndOutDegree;	///< max indirect out degrees of SVFG nodes.
 
     double addTopLevelNodeTimeStart;
     double addTopLevelNodeTimeEnd;

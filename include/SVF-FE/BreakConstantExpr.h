@@ -37,16 +37,11 @@ private:
 public:
     static char ID;
     BreakConstantGEPs() : ModulePass(ID) {}
-    StringRef getPassName() const
+    llvm::StringRef getPassName() const
     {
         return "Remove Constant GEP Expressions";
     }
     virtual bool runOnModule (Module & M);
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const
-    {
-        // This pass does not modify the control-flow graph of the function
-        AU.setPreservesCFG();
-    }
 };
 
 
@@ -66,7 +61,7 @@ private:
 public:
     static char ID;
     MergeFunctionRets() : ModulePass(ID) {}
-    StringRef getPassName() const
+    llvm::StringRef getPassName() const
     {
         return "unify function exit into one dummy exit basic block";
     }
@@ -91,12 +86,6 @@ public:
     {
         assert(!fn.isDeclaration() && "external function does not have DF");
         return &getAnalysis<UnifyFunctionExitNodes>(const_cast<Function&>(fn));
-    }
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const
-    {
-        // This pass does not modify the control-flow graph of the function
-        AU.addRequired<UnifyFunctionExitNodes>();
-        AU.addPreserved<BreakConstantGEPs>();
     }
 };
 

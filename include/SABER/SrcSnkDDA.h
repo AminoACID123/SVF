@@ -30,7 +30,8 @@
 #ifndef SRCSNKANALYSIS_H_
 #define SRCSNKANALYSIS_H_
 
-#include "Util/CFLSolver.h"
+
+#include "Util/GraphReachSolver.h"
 #include "Graphs/SVFGOPT.h"
 #include "SABER/ProgSlice.h"
 #include "SABER/SaberSVFGBuilder.h"
@@ -38,7 +39,7 @@
 namespace SVF
 {
 
-typedef CFLSolver<SVFG*,CxtDPItem> CFLSrcSnkSolver;
+typedef GraphReachSolver<SVFG*,CxtDPItem> CFLSrcSnkSolver;
 
 /*!
  * General source-sink analysis, which serves as a base analysis to be extended for various clients
@@ -53,7 +54,7 @@ public:
     typedef CxtDPItem DPIm;
     typedef Set<DPIm> DPImSet;							///< dpitem set
     typedef Map<const SVFGNode*, DPImSet> SVFGNodeToDPItemsMap; 	///< map a SVFGNode to its visited dpitems
-    typedef Set<const CallBlockNode*> CallSiteSet;
+    typedef Set<const CallICFGNode*> CallSiteSet;
     typedef NodeBS SVFGNodeBS;
     typedef ProgSlice::VFWorkList WorkList;
 
@@ -110,10 +111,10 @@ public:
         dumpSlices();
     }
 
-    /// Get PAG
-    PAG* getPAG() const
+    /// Get SVFIR
+    SVFIR* getPAG() const
     {
-        return PAG::getPAG();
+        return SVFIR::getPAG();
     }
 
     /// Get SVFG
@@ -168,19 +169,23 @@ public:
     ///@{
     virtual void initSrcs() = 0;
     virtual void initSnks() = 0;
-    virtual bool isSourceLikeFun(const SVFFunction* fun) {
+    virtual bool isSourceLikeFun(const SVFFunction* fun)
+    {
         return false;
     }
 
-    virtual bool isSinkLikeFun(const SVFFunction* fun) {
+    virtual bool isSinkLikeFun(const SVFFunction* fun)
+    {
         return false;
     }
 
-    bool isSource(const SVFGNode* node) const {
+    bool isSource(const SVFGNode* node) const
+    {
         return getSources().find(node)!=getSources().end();
     }
 
-    bool isSink(const SVFGNode* node) const {
+    bool isSink(const SVFGNode* node) const
+    {
         return getSinks().find(node)!=getSinks().end();
     }
     ///@}

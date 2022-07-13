@@ -28,9 +28,9 @@
  */
 
 #include "Util/Options.h"
-#include "SVF-FE/LLVMUtil.h"
+#include "Graphs/CHG.h"
+#include "Util/SVFUtil.h"
 #include "MemoryModel/PointsTo.h"
-#include "Util/Options.h"
 #include "WPA/Andersen.h"
 #include "WPA/Steensgaard.h"
 
@@ -38,40 +38,48 @@ using namespace SVF;
 using namespace SVFUtil;
 
 
-Size_t AndersenBase::numOfProcessedAddr = 0;
-Size_t AndersenBase::numOfProcessedCopy = 0;
-Size_t AndersenBase::numOfProcessedGep = 0;
-Size_t AndersenBase::numOfProcessedLoad = 0;
-Size_t AndersenBase::numOfProcessedStore = 0;
-Size_t AndersenBase::numOfSfrs = 0;
-Size_t AndersenBase::numOfFieldExpand = 0;
+u32_t AndersenBase::numOfProcessedAddr = 0;
+u32_t AndersenBase::numOfProcessedCopy = 0;
+u32_t AndersenBase::numOfProcessedGep = 0;
+u32_t AndersenBase::numOfProcessedLoad = 0;
+u32_t AndersenBase::numOfProcessedStore = 0;
+u32_t AndersenBase::numOfSfrs = 0;
+u32_t AndersenBase::numOfFieldExpand = 0;
 
-Size_t AndersenBase::numOfSCCDetection = 0;
+u32_t AndersenBase::numOfSCCDetection = 0;
 double AndersenBase::timeOfSCCDetection = 0;
 double AndersenBase::timeOfSCCMerges = 0;
 double AndersenBase::timeOfCollapse = 0;
 
-Size_t AndersenBase::AveragePointsToSetSize = 0;
-Size_t AndersenBase::MaxPointsToSetSize = 0;
+u32_t AndersenBase::AveragePointsToSetSize = 0;
+u32_t AndersenBase::MaxPointsToSetSize = 0;
 double AndersenBase::timeOfProcessCopyGep = 0;
 double AndersenBase::timeOfProcessLoadStore = 0;
 double AndersenBase::timeOfUpdateCallGraph = 0;
 
+/*!
+ * Destructor
+ */
+AndersenBase::~AndersenBase()
+{
+    delete consCG;
+    consCG = nullptr;
+}
 
 /*!
  * Initilize analysis
  */
 void AndersenBase::initialize()
 {
-    /// Build PAG
+    /// Build SVFIR
     PointerAnalysis::initialize();
     /// Build Constraint Graph
     consCG = new ConstraintGraph(pag);
     setGraph(consCG);
     /// Create statistic class
     stat = new AndersenStat(this);
-	if (Options::ConsCGDotGraph)
-		consCG->dump("consCG_initial");
+    if (Options::ConsCGDotGraph)
+        consCG->dump("consCG_initial");
 }
 
 /*!
@@ -80,11 +88,11 @@ void AndersenBase::initialize()
 void AndersenBase::finalize()
 {
     /// dump constraint graph if PAGDotGraph flag is enabled
-	if (Options::ConsCGDotGraph)
-		consCG->dump("consCG_final");
+    if (Options::ConsCGDotGraph)
+        consCG->dump("consCG_final");
 
-	if (Options::PrintCGGraph)
-		consCG->print();
+    if (Options::PrintCGGraph)
+        consCG->print();
     BVDataPTAImpl::finalize();
 }
 
@@ -97,7 +105,8 @@ void AndersenBase::analyze()
     initialize();
 
     bool readResultsFromFile = false;
-    if(!Options::ReadAnder.empty()) {
+    if(!Options::ReadAnder.empty())
+    {
         readResultsFromFile = this->readFromFile(Options::ReadAnder);
         // Finalize the analysis
         PointerAnalysis::finalize();
@@ -140,7 +149,8 @@ void AndersenBase::analyze()
         this->writeToFile(Options::WriteAnder);
 }
 
-void AndersenBase::cleanConsCG(NodeID id) {
+void AndersenBase::cleanConsCG(NodeID id)
+{
     consCG->resetSubs(consCG->getRep(id));
     for (NodeID sub: consCG->getSubs(id))
         consCG->resetRep(sub);
@@ -151,17 +161,18 @@ void AndersenBase::cleanConsCG(NodeID id) {
 
 void AndersenBase::normalizePointsTo()
 {
-    PAG::MemObjToFieldsMap &memToFieldsMap = pag->getMemToFieldsMap();
-    PAG::NodeLocationSetMap &GepObjNodeMap = pag->getGepObjNodeMap();
+    SVFIR::MemObjToFieldsMap &memToFieldsMap = pag->getMemToFieldsMap();
+    SVFIR::NodeLocationSetMap &GepObjVarMap = pag->getGepObjNodeMap();
 
-    // clear GepObjNodeMap/memToFieldsMap/nodeToSubsMap/nodeToRepMap
+    // clear GepObjVarMap/memToFieldsMap/nodeToSubsMap/nodeToRepMap
     // for redundant gepnodes and remove those nodes from pag
-    for (NodeID n: redundantGepNodes) {
-        NodeID base = pag->getBaseObjNode(n);
-        GepObjPN *gepNode = SVFUtil::dyn_cast<GepObjPN>(pag->getPAGNode(n));
+    for (NodeID n: redundantGepNodes)
+    {
+        NodeID base = pag->getBaseObjVar(n);
+        GepObjVar *gepNode = SVFUtil::dyn_cast<GepObjVar>(pag->getGNode(n));
         assert(gepNode && "Not a gep node in redundantGepNodes set");
         const LocationSet ls = gepNode->getLocationSet();
-        GepObjNodeMap.erase(std::make_pair(base, ls));
+        GepObjVarMap.erase(std::make_pair(base, ls));
         memToFieldsMap[base].reset(n);
         cleanConsCG(n);
 
@@ -205,7 +216,7 @@ void Andersen::finalize()
     /// sanitize field insensitive obj
     /// TODO: Fields has been collapsed during Andersen::collapseField().
     //	sanitizePts();
-	AndersenBase::finalize();
+    AndersenBase::finalize();
 }
 
 /*!
@@ -399,11 +410,11 @@ bool Andersen::processGepPts(const PointsTo& pts, const GepCGEdge* edge)
             if (!isFieldInsensitive(o))
             {
                 setObjFieldInsensitive(o);
-                consCG->addNodeToBeCollapsed(consCG->getBaseObjNode(o));
+                consCG->addNodeToBeCollapsed(consCG->getBaseObjVar(o));
             }
 
             // Add the field-insensitive node into pts.
-            NodeID baseId = consCG->getFIObjNode(o);
+            NodeID baseId = consCG->getFIObjVar(o);
             tmpDstPts.set(baseId);
         }
     }
@@ -422,7 +433,7 @@ bool Andersen::processGepPts(const PointsTo& pts, const GepCGEdge* edge)
 
             if (!matchType(edge->getSrcID(), o, normalGepEdge)) continue;
 
-            NodeID fieldSrcPtdNode = consCG->getGepObjNode(o, normalGepEdge->getLocationSet());
+            NodeID fieldSrcPtdNode = consCG->getGepObjVar(o, normalGepEdge->getLocationSet());
             tmpDstPts.set(fieldSrcPtdNode);
             addTypeForGepObjNode(fieldSrcPtdNode, normalGepEdge);
         }
@@ -549,9 +560,9 @@ bool Andersen::collapseField(NodeID nodeId)
     setObjFieldInsensitive(nodeId);
 
     // replace all occurrences of each field with the field-insensitive node
-    NodeID baseId = consCG->getFIObjNode(nodeId);
+    NodeID baseId = consCG->getFIObjVar(nodeId);
     NodeID baseRepNodeId = consCG->sccRepNode(baseId);
-    NodeBS & allFields = consCG->getAllFieldsObjNode(baseId);
+    NodeBS & allFields = consCG->getAllFieldsObjVars(baseId);
     for (NodeBS::iterator fieldIt = allFields.begin(), fieldEit = allFields.end(); fieldIt != fieldEit; fieldIt++)
     {
         NodeID fieldId = *fieldIt;
@@ -571,7 +582,8 @@ bool Andersen::collapseField(NodeID nodeId)
             // merge field node into base node, including edges and pts.
             NodeID fieldRepNodeId = consCG->sccRepNode(fieldId);
             mergeNodeToRep(fieldRepNodeId, baseRepNodeId);
-            if (fieldId != baseRepNodeId){
+            if (fieldId != baseRepNodeId)
+            {
                 // gep node fieldId becomes redundant if it is merged to its base node who is set as field-insensitive
                 // two node IDs should be different otherwise this field is actually the base and should not be removed.
                 redundantGepNodes.set(fieldId);
@@ -646,7 +658,7 @@ bool Andersen::updateCallGraph(const CallSiteToFunPtrMap& callsites)
 void Andersen::heapAllocatorViaIndCall(CallSite cs, NodePairSet &cpySrcNodes)
 {
     assert(SVFUtil::getCallee(cs) == nullptr && "not an indirect callsite?");
-    RetBlockNode* retBlockNode = pag->getICFG()->getRetBlockNode(cs.getInstruction());
+    RetICFGNode* retBlockNode = pag->getICFG()->getRetICFGNode(cs.getInstruction());
     const PAGNode* cs_return = pag->getCallSiteRet(retBlockNode);
     NodeID srcret;
     CallSite2DummyValPN::const_iterator it = callsite2DummyValPN.find(cs);
@@ -677,10 +689,10 @@ void Andersen::connectCaller2CalleeParams(CallSite cs, const SVFFunction* F, Nod
 {
     assert(F);
 
-    DBOUT(DAndersen, outs() << "connect parameters from indirect callsite " << *cs.getInstruction() << " to callee " << *F << "\n");
+    DBOUT(DAndersen, outs() << "connect parameters from indirect callsite " << SVFUtil::value2String(cs.getInstruction()) << " to callee " << *F << "\n");
 
-    CallBlockNode* callBlockNode = pag->getICFG()->getCallBlockNode(cs.getInstruction());
-    RetBlockNode* retBlockNode = pag->getICFG()->getRetBlockNode(cs.getInstruction());
+    CallICFGNode* callBlockNode = pag->getICFG()->getCallICFGNode(cs.getInstruction());
+    RetICFGNode* retBlockNode = pag->getICFG()->getRetICFGNode(cs.getInstruction());
 
     if(SVFUtil::isHeapAllocExtFunViaRet(F) && pag->callsiteHasRet(retBlockNode))
     {
@@ -710,12 +722,12 @@ void Andersen::connectCaller2CalleeParams(CallSite cs, const SVFFunction* F, Nod
     {
 
         // connect actual and formal param
-        const PAG::PAGNodeList& csArgList = pag->getCallSiteArgsList(callBlockNode);
-        const PAG::PAGNodeList& funArgList = pag->getFunArgsList(F);
+        const SVFIR::SVFVarList& csArgList = pag->getCallSiteArgsList(callBlockNode);
+        const SVFIR::SVFVarList& funArgList = pag->getFunArgsList(F);
         //Go through the fixed parameters.
         DBOUT(DPAGBuild, outs() << "      args:");
-        PAG::PAGNodeList::const_iterator funArgIt = funArgList.begin(), funArgEit = funArgList.end();
-        PAG::PAGNodeList::const_iterator csArgIt  = csArgList.begin(), csArgEit = csArgList.end();
+        SVFIR::SVFVarList::const_iterator funArgIt = funArgList.begin(), funArgEit = funArgList.end();
+        SVFIR::SVFVarList::const_iterator csArgIt  = csArgList.begin(), csArgEit = csArgList.end();
         for (; funArgIt != funArgEit; ++csArgIt, ++funArgIt)
         {
             //Some programs (e.g. Linux kernel) leave unneeded parameters empty.
@@ -780,14 +792,21 @@ bool Andersen::mergeSrcToTgt(NodeID nodeId, NodeID newRepId)
 
     /// move the edges from node to rep, and remove the node
     ConstraintNode* node = consCG->getConstraintNode(nodeId);
-    bool gepInsideScc = consCG->moveEdgesToRepNode(node, consCG->getConstraintNode(newRepId));
+    bool pwc = consCG->moveEdgesToRepNode(node, consCG->getConstraintNode(newRepId));
+
+    /// 1. if find gep edges inside SCC cycle, the rep node will become a PWC node and
+    /// its pts should be collapsed later.
+    /// 2. if the node to be merged is already a PWC node, the rep node will also become
+    /// a PWC node as it will have a self-cycle gep edge.
+    if(node->isPWCNode())
+        pwc = true;
 
     /// set rep and sub relations
     updateNodeRepAndSubs(node->getId(),newRepId);
 
     consCG->removeConstraintNode(node);
 
-    return gepInsideScc;
+    return pwc;
 }
 /*
  * Merge a node to its rep node based on SCC detection
@@ -795,13 +814,7 @@ bool Andersen::mergeSrcToTgt(NodeID nodeId, NodeID newRepId)
 void Andersen::mergeNodeToRep(NodeID nodeId,NodeID newRepId)
 {
 
-    ConstraintNode* node = consCG->getConstraintNode(nodeId);
-    bool gepInsideScc = mergeSrcToTgt(nodeId,newRepId);
-    /// 1. if find gep edges inside SCC cycle, the rep node will become a PWC node and
-    /// its pts should be collapsed later.
-    /// 2. if the node to be merged is already a PWC node, the rep node will also become
-    /// a PWC node as it will have a self-cycle gep edge.
-    if (gepInsideScc || node->isPWCNode())
+    if (mergeSrcToTgt(nodeId,newRepId))
         consCG->setPWCNode(newRepId);
 }
 
@@ -831,7 +844,7 @@ void Andersen::cluster(void) const
     assert(Options::MaxFieldLimit == 0 && "Andersen::cluster: clustering for Andersen's is currently only supported in field-insesnsitive analysis");
     Steensgaard *steens = Steensgaard::createSteensgaard(pag);
     std::vector<std::pair<unsigned, unsigned>> keys;
-    for (PAG::iterator pit = pag->begin(); pit != pag->end(); ++pit)
+    for (SVFIR::iterator pit = pag->begin(); pit != pag->end(); ++pit)
     {
         keys.push_back(std::make_pair(pit->first, 1));
     }
@@ -853,7 +866,7 @@ void Andersen::dumpTopLevelPtsTo()
     for (OrderedNodeSet::iterator nIter = this->getAllValidPtrs().begin();
             nIter != this->getAllValidPtrs().end(); ++nIter)
     {
-        const PAGNode* node = getPAG()->getPAGNode(*nIter);
+        const PAGNode* node = getPAG()->getGNode(*nIter);
         if (getPAG()->isValidTopLevelPtr(node))
         {
             const PointsTo& pts = this->getPts(node->getId());
@@ -867,13 +880,13 @@ void Andersen::dumpTopLevelPtsTo()
             {
                 outs() << "\t\tPointsTo: { ";
 
-                multiset<Size_t> line;
+                multiset<u32_t> line;
                 for (PointsTo::iterator it = pts.begin(), eit = pts.end();
                         it != eit; ++it)
                 {
                     line.insert(*it);
                 }
-                for (multiset<Size_t>::const_iterator it = line.begin(); it != line.end(); ++it)
+                for (multiset<u32_t>::const_iterator it = line.begin(); it != line.end(); ++it)
                     outs() << *it << " ";
                 outs() << "}\n\n";
             }

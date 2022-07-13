@@ -31,37 +31,33 @@
 #define BASICTYPES_H_
 
 #include "Util/SVFBasicTypes.h"
-#include "SVF-FE/GEPTypeBridgeIterator.h"
 #include "Graphs/GraphPrinter.h"
 #include "Util/Casting.h"
-#include <llvm/ADT/SmallVector.h>		// for small vector
 #include <llvm/ADT/SparseBitVector.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/InstVisitor.h>	// for instruction visitor
 #include <llvm/IR/InstIterator.h>	// for inst iteration
 #include <llvm/IR/GetElementPtrTypeIterator.h>	//for gep iterator
-#include <llvm/Analysis/ScalarEvolution.h>
 #include <llvm/ADT/StringExtras.h>	// for utostr_32
 #include <llvm/Analysis/AliasAnalysis.h>
 #include <llvm/Analysis/CallGraph.h>	// call graph
 #include <llvm/IR/GlobalVariable.h>	// for GlobalVariable
 
-#include <llvm/Support/SourceMgr.h> // for SMDiagnostic
 #include <llvm/Bitcode/BitcodeWriter.h>		// for WriteBitcodeToFile
 #include <llvm/Bitcode/BitcodeReader.h>     /// for isBitcode
 #include <llvm/IRReader/IRReader.h>	// IR reader for bit file
-#include <llvm/Transforms/Utils/UnifyFunctionExitNodes.h>
 #include <llvm/Analysis/DominanceFrontier.h>
 #include <llvm/Analysis/PostDominators.h>
-#include <llvm/Analysis/ScalarEvolutionExpressions.h>
 #include <llvm/ADT/GraphTraits.h>		// for Graphtraits
-#include <llvm/Support/GraphWriter.h>		// for graph write
-#include <llvm/IR/IRBuilder.h>		// for instrument svf.main
 #include <llvm/Transforms/Utils/Local.h>	// for FindDbgAddrUses
-#include <llvm/IR/DebugInfo.h>
+
+#if (LLVM_VERSION_MAJOR >= 14)
+#include <llvm/BinaryFormat/Dwarf.h>
+#endif
 
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/IR/CFG.h"
+#include "llvm/BinaryFormat/Dwarf.h"
 
 namespace SVF
 {
@@ -70,127 +66,43 @@ class BddCond;
 
 
 /// LLVM Basic classes
-typedef llvm::SMDiagnostic SMDiagnostic;
-typedef llvm::LLVMContext LLVMContext;
 typedef llvm::Type Type;
 typedef llvm::Function Function;
 typedef llvm::BasicBlock BasicBlock;
 typedef llvm::Value Value;
 typedef llvm::Instruction Instruction;
 typedef llvm::CallBase CallBase;
-typedef llvm::GlobalObject GlobalObject;
 typedef llvm::GlobalValue GlobalValue;
 typedef llvm::GlobalVariable GlobalVariable;
 typedef llvm::Module Module;
-typedef llvm::CallGraph LLVMCallGraph;
 typedef llvm::User User;
-typedef llvm::Use Use;
 typedef llvm::Loop Loop;
 typedef llvm::LoopInfo LoopInfo;
-#if LLVM_VERSION_MAJOR >= 12
-    typedef llvm::UnifyFunctionExitNodesLegacyPass UnifyFunctionExitNodes;
-#else
-    typedef llvm::UnifyFunctionExitNodes UnifyFunctionExitNodes;
-#endif
-typedef llvm::ModulePass ModulePass;
-typedef llvm::AnalysisUsage AnalysisUsage;
 
 /// LLVM outputs
-typedef llvm::raw_ostream raw_ostream;
 typedef llvm::raw_string_ostream raw_string_ostream;
 typedef llvm::raw_fd_ostream raw_fd_ostream;
-typedef llvm::StringRef StringRef;
-typedef llvm::ToolOutputFile ToolOutputFile;
 
 /// LLVM types
 typedef llvm::StructType StructType;
 typedef llvm::ArrayType ArrayType;
 typedef llvm::PointerType PointerType;
 typedef llvm::FunctionType FunctionType;
-typedef llvm::VectorType VectorType;
-typedef llvm::MetadataAsValue MetadataAsValue;
-typedef llvm::BlockAddress BlockAddress;
-
-/// LLVM data layout
-typedef llvm::DataLayout DataLayout;
-typedef llvm::StructLayout StructLayout;
-typedef llvm::SmallVector<BasicBlock*, 8> SmallBBVector;
-typedef llvm::ConstantStruct ConstantStruct;
-typedef llvm::MemoryLocation MemoryLocation;
 
 /// LLVM Aliases and constants
 typedef llvm::Argument Argument;
-typedef llvm::Constant Constant;
-typedef llvm::ConstantData ConstantData;
-typedef llvm::ConstantAggregate ConstantAggregate;
-typedef llvm::ConstantAggregateZero ConstantAggregateZero;
-typedef llvm::ConstantDataSequential ConstantDataSequential;
 typedef llvm::ConstantInt ConstantInt;
-typedef llvm::ConstantFP ConstantFP;
-typedef llvm::ConstantTokenNone ConstantTokenNone;
-typedef llvm::ConstantExpr ConstantExpr;
 typedef llvm::ConstantPointerNull ConstantPointerNull;
-typedef llvm::ConstantArray ConstantArray;
 typedef llvm::GlobalAlias GlobalAlias;
-typedef llvm::AliasResult AliasResult;
-typedef llvm::ModRefInfo ModRefInfo;
-typedef llvm::AnalysisID AnalysisID;
-typedef llvm::ConstantDataArray ConstantDataArray;
 
 /// LLVM metadata
 typedef llvm::NamedMDNode NamedMDNode;
-typedef llvm::MDString MDString;
 typedef llvm::MDNode MDNode;
 
-
 /// LLVM Instructions
-typedef llvm::AllocaInst AllocaInst;
 typedef llvm::CallInst CallInst;
-typedef llvm::InvokeInst InvokeInst;
-typedef llvm::CallBrInst CallBrInst;
 typedef llvm::StoreInst StoreInst;
 typedef llvm::LoadInst LoadInst;
-typedef llvm::PHINode PHINode;
-typedef llvm::GetElementPtrInst GetElementPtrInst;
-typedef llvm::CastInst CastInst;
-typedef llvm::BitCastInst BitCastInst;
-typedef llvm::ReturnInst ReturnInst;
-typedef llvm::SelectInst SelectInst;
-typedef llvm::IntToPtrInst IntToPtrInst;
-typedef llvm::CmpInst CmpInst;
-typedef llvm::BranchInst BranchInst;
-typedef llvm::SwitchInst SwitchInst;
-typedef llvm::ExtractValueInst  ExtractValueInst;
-typedef llvm::InsertValueInst InsertValueInst;
-typedef llvm::BinaryOperator BinaryOperator;
-typedef llvm::UnaryOperator UnaryOperator;
-typedef llvm::PtrToIntInst PtrToIntInst;
-typedef llvm::VAArgInst VAArgInst;
-typedef llvm::ExtractElementInst ExtractElementInst;
-typedef llvm::InsertElementInst InsertElementInst;
-typedef llvm::ShuffleVectorInst ShuffleVectorInst;
-typedef llvm::LandingPadInst LandingPadInst;
-typedef llvm::ResumeInst ResumeInst;
-typedef llvm::UnreachableInst UnreachableInst;
-typedef llvm::FenceInst FenceInst;
-typedef llvm::AtomicCmpXchgInst AtomicCmpXchgInst;
-typedef llvm::AtomicRMWInst AtomicRMWInst;
-typedef llvm::UndefValue UndefValue;
-typedef llvm::VACopyInst VACopyInst;
-typedef llvm::VAEndInst VAEndInst;
-typedef llvm::VAStartInst VAStartInst;
-typedef llvm::FreezeInst FreezeInst;
-
-#if (LLVM_VERSION_MAJOR >= 9)
-typedef llvm::FunctionCallee FunctionCallee;
-#endif
-
-/// LLVM scalar evolution
-typedef llvm::ScalarEvolutionWrapperPass ScalarEvolutionWrapperPass;
-typedef llvm::ScalarEvolution ScalarEvolution;
-typedef llvm::SCEVAddRecExpr SCEVAddRecExpr;
-typedef llvm::SCEVConstant SCEVConstant;
-typedef llvm::SCEV SCEV;
 
 /// LLVM Dominators
 typedef llvm::DominanceFrontier DominanceFrontier;
@@ -198,37 +110,18 @@ typedef llvm::DominatorTree DominatorTree;
 typedef llvm::PostDominatorTree PostDominatorTree;
 typedef llvm::DomTreeNode DomTreeNode;
 typedef llvm::DominanceFrontierBase<BasicBlock, false> DominanceFrontierBase;
-typedef llvm::PostDominatorTreeWrapperPass PostDominatorTreeWrapperPass;
-typedef llvm::LoopInfoWrapperPass LoopInfoWrapperPass;
 
 /// LLVM Iterators
-typedef llvm::inst_iterator inst_iterator;
 #if LLVM_VERSION_MAJOR >= 11
-    typedef llvm::const_succ_iterator succ_const_iterator;
+typedef llvm::const_succ_iterator succ_const_iterator;
 #else
-    typedef llvm::succ_const_iterator succ_const_iterator;
+typedef llvm::succ_const_iterator succ_const_iterator;
 #endif
-typedef llvm::const_inst_iterator const_inst_iterator;
-typedef llvm::const_pred_iterator const_pred_iterator;
-typedef llvm::gep_type_iterator gep_type_iterator;
-typedef llvm::bridge_gep_iterator bridge_gep_iterator;
 typedef llvm::GraphPrinter GraphPrinter;
-typedef llvm::IRBuilder<> IRBuilder;
 typedef llvm::IntegerType IntegerType;
 
-/// LLVM debug information
-typedef llvm::DebugInfoFinder DebugInfoFinder;
-typedef llvm::DIType DIType;
-typedef llvm::DIBasicType DIBasicType;
-typedef llvm::DICompositeType DICompositeType;
-typedef llvm::DIDerivedType DIDerivedType;
-typedef llvm::DISubroutineType DISubroutineType;
+// LLVM Debug Information
 typedef llvm::DISubprogram DISubprogram;
-typedef llvm::DISubrange DISubrange;
-typedef llvm::DINode DINode;
-typedef llvm::DINodeArray DINodeArray;
-typedef llvm::DITypeRefArray DITypeRefArray;
-namespace dwarf = llvm::dwarf;
 
 class SVFFunction : public SVFValue
 {
@@ -242,7 +135,7 @@ public:
     {
     }
 
-    SVFFunction(Function* f): SVFValue(f->getName(),SVFValue::SVFFunc),
+    SVFFunction(Function* f): SVFValue(f->getName().str(),SVFValue::SVFFunc),
         isDecl(f->isDeclaration()), isIntri(f->isIntrinsic()), fun(f)
     {
     }
@@ -265,6 +158,11 @@ public:
     inline u32_t arg_size() const
     {
         return getLLVMFun()->arg_size();
+    }
+
+    const Value* getArg(u32_t idx) const
+    {
+        return getLLVMFun()->getArg(idx);
     }
 
     inline bool isVarArg() const
@@ -300,49 +198,89 @@ public:
 
 };
 
-class SVFInstruction : public SVFValue
+class CallSite
 {
-
-public:
-    SVFInstruction(const std::string& val): SVFValue(val,SVFValue::SVFInst)
-    {
-    }
-
-};
-
-class CallSite {
 private:
     CallBase *CB;
 public:
     CallSite(Instruction *I) : CB(SVFUtil::dyn_cast<CallBase>(I)) {}
     CallSite(Value *I) : CB(SVFUtil::dyn_cast<CallBase>(I)) {}
 
-    CallBase *getInstruction() const { return CB; }
+    CallBase *getInstruction() const
+    {
+        return CB;
+    }
     using arg_iterator = User::const_op_iterator;
-    Value *getArgument(unsigned ArgNo) const { return CB->getArgOperand(ArgNo);}
-    Type *getType() const { return CB->getType(); }
-    User::const_op_iterator arg_begin() const { return CB->arg_begin();}
-    User::const_op_iterator arg_end() const { return CB->arg_end();}
-    unsigned arg_size() const { return CB->arg_size(); }
-    bool arg_empty() const { return CB->arg_empty(); }
-    Value *getArgOperand(unsigned i) const { return CB->getArgOperand(i); }
-    unsigned getNumArgOperands() const { return CB->arg_size(); }
-    Function *getCalledFunction() const { return CB->getCalledFunction(); }
-    Value *getCalledValue() const { return CB->getCalledOperand(); }
-    Function *getCaller() const { return CB->getCaller(); }
-    FunctionType *getFunctionType() const { return CB->getFunctionType(); }
-    bool paramHasAttr(unsigned ArgNo, llvm::Attribute::AttrKind Kind) const { return CB->paramHasAttr(ArgNo, Kind); }
+    Value *getArgument(unsigned ArgNo) const
+    {
+        return CB->getArgOperand(ArgNo);
+    }
+    Type *getType() const
+    {
+        return CB->getType();
+    }
+    User::const_op_iterator arg_begin() const
+    {
+        return CB->arg_begin();
+    }
+    User::const_op_iterator arg_end() const
+    {
+        return CB->arg_end();
+    }
+    unsigned arg_size() const
+    {
+        return CB->arg_size();
+    }
+    bool arg_empty() const
+    {
+        return CB->arg_empty();
+    }
+    Value *getArgOperand(unsigned i) const
+    {
+        return CB->getArgOperand(i);
+    }
+    unsigned getNumArgOperands() const
+    {
+        return CB->arg_size();
+    }
+    Function *getCalledFunction() const
+    {
+        return CB->getCalledFunction();
+    }
+    Value *getCalledValue() const
+    {
+        return CB->getCalledOperand();
+    }
+    Function *getCaller() const
+    {
+        return CB->getCaller();
+    }
+    FunctionType *getFunctionType() const
+    {
+        return CB->getFunctionType();
+    }
+    bool paramHasAttr(unsigned ArgNo, llvm::Attribute::AttrKind Kind) const
+    {
+        return CB->paramHasAttr(ArgNo, Kind);
+    }
 
-    bool operator==(const CallSite &CS) const { return CB == CS.CB; }
-    bool operator!=(const CallSite &CS) const { return CB != CS.CB; }
-    bool operator<(const CallSite &CS) const {
+    bool operator==(const CallSite &CS) const
+    {
+        return CB == CS.CB;
+    }
+    bool operator!=(const CallSite &CS) const
+    {
+        return CB != CS.CB;
+    }
+    bool operator<(const CallSite &CS) const
+    {
         return getInstruction() < CS.getInstruction();
     }
 
 };
 
 template <typename F, typename S>
-raw_ostream& operator<< (raw_ostream &o, const std::pair<F, S> &var)
+OutStream& operator<< (OutStream &o, const std::pair<F, S> &var)
 {
     o << "<" << var.first << ", " << var.second << ">";
     return o;
@@ -351,8 +289,10 @@ raw_ostream& operator<< (raw_ostream &o, const std::pair<F, S> &var)
 } // End namespace SVF
 
 /// Specialise hash for CallSites.
-template <> struct std::hash<SVF::CallSite> {
-    size_t operator()(const SVF::CallSite &cs) const {
+template <> struct std::hash<SVF::CallSite>
+{
+    size_t operator()(const SVF::CallSite &cs) const
+    {
         std::hash<SVF::Instruction *> h;
         return h(cs.getInstruction());
     }

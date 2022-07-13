@@ -31,6 +31,7 @@
 #include <queue>
 #include "Util/SVFModule.h"
 #include "Util/SVFUtil.h"
+#include "SVF-FE/BasicTypes.h"
 #include "SVF-FE/LLVMUtil.h"
 #include "SVF-FE/BreakConstantExpr.h"
 
@@ -92,7 +93,7 @@ void LLVMModuleSet::preProcessBCs(std::vector<std::string> &moduleNameVec)
     // Get the existing module names, remove old extention, add preProcessSuffix
     for (u32_t i = 0; i < moduleNameVec.size(); i++)
     {
-        u32_t lastIndex = moduleNameVec[i].find_last_of("."); 
+        u32_t lastIndex = moduleNameVec[i].find_last_of(".");
         std::string rawName = moduleNameVec[i].substr(0, lastIndex);
         moduleNameVec[i] = (rawName + preProcessSuffix);
     }
@@ -147,7 +148,7 @@ void LLVMModuleSet::prePassSchedule()
 void LLVMModuleSet::loadModules(const std::vector<std::string> &moduleNameVec)
 {
 
-        // We read PAG from LLVM IR
+    // We read SVFIR from LLVM IR
     if(Options::Graphtxt.getValue().empty())
     {
         if(moduleNameVec.empty())
@@ -157,10 +158,10 @@ void LLVMModuleSet::loadModules(const std::vector<std::string> &moduleNameVec)
         }
         //assert(!moduleNameVec.empty() && "no LLVM bc file is found!");
     }
-    // We read PAG from a user-defined txt instead of parsing PAG from LLVM IR
+    // We read SVFIR from a user-defined txt instead of parsing SVFIR from LLVM IR
     else
         SVFModule::setPagFromTXT(Options::Graphtxt.getValue());
-        
+
     //
     // To avoid the following type bugs (t1 != t3) when parsing multiple modules,
     // We should use only one LLVMContext object for multiple modules in the same thread.
@@ -178,14 +179,15 @@ void LLVMModuleSet::loadModules(const std::vector<std::string> &moduleNameVec)
     //
     cxts = std::make_unique<LLVMContext>();
 
-    for (const std::string& moduleName : moduleNameVec) {
+    for (const std::string& moduleName : moduleNameVec)
+    {
         SMDiagnostic Err;
         std::unique_ptr<Module> mod = parseIRFile(moduleName, Err, *cxts);
         if (mod == nullptr)
         {
             SVFUtil::errs() << "load module: " << moduleName << "failed!!\n\n";
-            Err.print("SVFModuleLoader", SVFUtil::errs());
-            continue;
+            Err.print("SVFModuleLoader", llvm::errs());
+            abort();
         }
         modules.emplace_back(*mod);
         owned_modules.emplace_back(std::move(mod));

@@ -13,9 +13,6 @@
 using namespace llvm;
 using namespace SVF;
 
-static cl::opt<std::string> InputFilename(cl::Positional,
-        cl::desc("<input bitcode>"), cl::init("-"));
-
 static cl::opt<bool>
 StandardCompileOpts("std-compile-opts",
                     cl::desc("Include the standard compile time optimizations"));
@@ -47,7 +44,7 @@ int main(int argc, char ** argv)
     int arg_num = 0;
     char **arg_value = new char*[argc];
     std::vector<std::string> moduleNameVec;
-    SVFUtil::processArguments(argc, argv, arg_num, arg_value, moduleNameVec);
+    LLVMUtil::processArguments(argc, argv, arg_num, arg_value, moduleNameVec);
     cl::ParseCommandLineOptions(arg_num, arg_value,
                                 "Demand-Driven Points-to Analysis\n");
 

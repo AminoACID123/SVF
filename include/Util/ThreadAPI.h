@@ -67,7 +67,7 @@ public:
         HARE_PAR_FOR
     };
 
-    typedef llvm::StringMap<TD_TYPE> TDAPIMap;
+    typedef Map<std::string, TD_TYPE> TDAPIMap;
 
 private:
     /// API map, from a string to threadAPI type
@@ -90,7 +90,7 @@ private:
     {
         if(F)
         {
-            TDAPIMap::const_iterator it= tdAPIMap.find(F->getName().str());
+            TDAPIMap::const_iterator it= tdAPIMap.find(F->getName());
             if(it != tdAPIMap.end())
                 return it->second;
         }
@@ -106,6 +106,15 @@ public:
             tdAPI = new ThreadAPI();
         }
         return tdAPI;
+    }
+
+    static void destroy()
+    {
+        if(tdAPI != nullptr)
+        {
+            delete tdAPI;
+            tdAPI = nullptr;
+        }
     }
 
     /// Return the callee/callsite/func
@@ -324,7 +333,7 @@ public:
     //@}
 
     void performAPIStat(SVFModule* m);
-    void statInit(llvm::StringMap<u32_t>& tdAPIStatMap);
+    void statInit(Map<std::string, u32_t>& tdAPIStatMap);
 };
 
 } // End namespace SVF

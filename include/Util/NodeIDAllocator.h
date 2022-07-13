@@ -27,6 +27,9 @@ public:
         /// If [****...*****] is the space of unsigned integers, we allocate as,
         /// [ssssooooooo...vvvvvvv] (o = object, v = value, s = special).
         DENSE,
+        /// Like dense, but with order flipped:
+        /// [ssssvvvvvvv...ooooooo]
+        REVERSE_DENSE,
         /// Allocate objects objects and values sequentially, intermixed.
         SEQ,
         /// Allocate values and objects as they come in with a single counter.
@@ -68,10 +71,13 @@ public:
     NodeID allocateValueId(void);
 
     /// Notify the allocator that all symbols have had IDs allocated.
-    void endSymbolAllocation(void);
+    NodeID endSymbolAllocation(void);
 
     /// Returns the total number of memory objects.
-    NodeID getNumObjects(void) const { return numObjects; }
+    NodeID getNumObjects(void) const
+    {
+        return numObjects;
+    }
 
 private:
     /// Builds a node ID allocator with the strategy specified on the command line.
@@ -132,7 +138,7 @@ public:
         /// based on the points-to sets in pta accessed through keys.
         /// The second part of the keys pairs are the number of (potential) occurrences of that points-to set
         /// or a subset, depending on the client's wish.
-        /// TODO: interfaces are getting unwieldy, an initialised object may be better. 
+        /// TODO: interfaces are getting unwieldy, an initialised object may be better.
         /// TODO: kind of sucks pta can't be const here because getPts isn't.
         static std::vector<NodeID> cluster(BVDataPTAImpl *pta, const std::vector<std::pair<NodeID, unsigned>> keys, std::vector<std::pair<hclust_fast_methods, std::vector<NodeID>>> &candidates, std::string evalSubtitle="");
 
@@ -177,8 +183,8 @@ public:
 
         // From all the candidates, returns the best mapping for pointsToSets (points-to set -> # occurences).
         static inline std::pair<hclust_fast_methods, std::vector<NodeID>> determineBestMapping(
-            const std::vector<std::pair<hclust_fast_methods, std::vector<NodeID>>> &candidates,
-            Map<PointsTo, unsigned> pointsToSets, const std::string &evalSubtitle, double &evalTime);
+                    const std::vector<std::pair<hclust_fast_methods, std::vector<NodeID>>> &candidates,
+                    Map<PointsTo, unsigned> pointsToSets, const std::string &evalSubtitle, double &evalTime);
 
     };
 };

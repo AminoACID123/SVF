@@ -29,7 +29,7 @@
  */
 
 #include "Util/SVFModule.h"
-#include "SVF-FE/LLVMUtil.h"
+#include "Util/SVFUtil.h"
 #include "Graphs/PTACallGraph.h"
 
 using namespace SVF;
@@ -42,20 +42,21 @@ CallSiteID PTACallGraph::totalCallSiteNum = 1;
 
 /// Add direct and indirect callsite
 //@{
-void PTACallGraphEdge::addDirectCallSite(const CallBlockNode* call)
+void PTACallGraphEdge::addDirectCallSite(const CallICFGNode* call)
 {
     assert(SVFUtil::getCallee(call->getCallSite()) && "not a direct callsite??");
     directCalls.insert(call);
 }
 
-void PTACallGraphEdge::addInDirectCallSite(const CallBlockNode* call)
+void PTACallGraphEdge::addInDirectCallSite(const CallICFGNode* call)
 {
     assert((nullptr == SVFUtil::getCallee(call->getCallSite()) || nullptr == SVFUtil::dyn_cast<Function> (SVFUtil::getForkedFun(call->getCallSite()))) && "not an indirect callsite??");
     indirectCalls.insert(call);
 }
 //@}
 
-const std::string PTACallGraphEdge::toString() const {
+const std::string PTACallGraphEdge::toString() const
+{
     std::string str;
     raw_string_ostream rawstr(str);
     rawstr << "CallSite ID: " << getCallSiteID();
@@ -67,7 +68,8 @@ const std::string PTACallGraphEdge::toString() const {
     return rawstr.str();
 }
 
-const std::string PTACallGraphNode::toString() const {
+const std::string PTACallGraphNode::toString() const
+{
     std::string str;
     raw_string_ostream rawstr(str);
     rawstr << "CallGraphNode ID: " << getId() << " {fun: " << fun->getName() << "}";
@@ -162,7 +164,7 @@ PTACallGraphEdge* PTACallGraph::getGraphEdge(PTACallGraphNode* src, PTACallGraph
 /*!
  * Add direct call edges
  */
-void PTACallGraph::addDirectCallGraphEdge(const CallBlockNode* cs,const SVFFunction* callerFun, const SVFFunction* calleeFun)
+void PTACallGraph::addDirectCallGraphEdge(const CallICFGNode* cs,const SVFFunction* callerFun, const SVFFunction* calleeFun)
 {
 
     PTACallGraphNode* caller = getCallGraphNode(callerFun);
@@ -182,7 +184,7 @@ void PTACallGraph::addDirectCallGraphEdge(const CallBlockNode* cs,const SVFFunct
 /*!
  * Add indirect call edge to update call graph
  */
-void PTACallGraph::addIndirectCallGraphEdge(const CallBlockNode* cs,const SVFFunction* callerFun, const SVFFunction* calleeFun)
+void PTACallGraph::addIndirectCallGraphEdge(const CallICFGNode* cs,const SVFFunction* callerFun, const SVFFunction* calleeFun)
 {
 
     PTACallGraphNode* caller = getCallGraphNode(callerFun);
@@ -269,10 +271,10 @@ void PTACallGraph::verifyCallGraph()
         const FunctionSet& targets = it->second;
         if (targets.empty() == false)
         {
-            const CallBlockNode* cs = it->first;
+            const CallICFGNode* cs = it->first;
             const SVFFunction* func = cs->getCaller();
             if (getCallGraphNode(func)->isReachableFromProgEntry() == false)
-                writeWrnMsg(func->getName().str() + " has indirect call site but not reachable from main");
+                writeWrnMsg(func->getName() + " has indirect call site but not reachable from main");
         }
     }
 }
@@ -313,7 +315,7 @@ bool PTACallGraph::isReachableBetweenFunctions(const SVFFunction* srcFn, const S
  */
 void PTACallGraph::dump(const std::string& filename)
 {
-      GraphPrinter::WriteGraphToFile(outs(), filename, this);
+    GraphPrinter::WriteGraphToFile(outs(), filename, this);
 }
 
 void PTACallGraph::view()

@@ -124,8 +124,14 @@ public:
     /// If not, remaps.
     void checkAndRemap(void);
 
-    const_iterator begin(void) const { return PointsToIterator(this); }
-    const_iterator end(void) const { return PointsToIterator(this, true); }
+    const_iterator begin(void) const
+    {
+        return PointsToIterator(this);
+    }
+    const_iterator end(void) const
+    {
+        return PointsToIterator(this, true);
+    }
 
     MappingPtr getNodeMapping(void) const;
 
@@ -199,7 +205,7 @@ public:
         const PointsToIterator operator++(int);
 
         /// Dereference: *it.
-        const u32_t operator*(void) const;
+        u32_t operator*(void) const;
 
         /// Equality: *this == rhs.
         bool operator==(const PointsToIterator &rhs) const;

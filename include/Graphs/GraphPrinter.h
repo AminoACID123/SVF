@@ -28,11 +28,12 @@
  *      Author: Yulei
  */
 
-#ifndef INCLUDE_UTIL_GRAPHPRINTER_H_
-#define INCLUDE_UTIL_GRAPHPRINTER_H_
+#ifndef INCLUDE_GRAPHS_GRAPHPRINTER_H_
+#define INCLUDE_GRAPHS_GRAPHPRINTER_H_
 
 #include <system_error>
 #include <llvm/Support/ToolOutputFile.h>
+#include <llvm/Support/GraphWriter.h>		// for graph write
 #include <llvm/Support/FileSystem.h>		// for file open flag
 #include <llvm/ADT/GraphTraits.h>
 
@@ -54,7 +55,7 @@ public:
      *  Write the graph into dot file for debugging purpose
      */
     template<class GraphType>
-    static void WriteGraphToFile(llvm::raw_ostream &O,
+    static void WriteGraphToFile(SVF::OutStream &O,
                                  const std::string &GraphName, const GraphType &GT, bool simple = false)
     {
         // Filename of the output dot file
@@ -83,7 +84,7 @@ public:
      * Print the graph to command line
      */
     template<class GraphType>
-    static void PrintGraph(llvm::raw_ostream &O, const std::string &GraphName,
+    static void PrintGraph(SVF::OutStream &O, const std::string &GraphName,
                            const GraphType &GT)
     {
         ///Define the GTraits and node iterator for printing
@@ -115,4 +116,4 @@ public:
 
 
 
-#endif /* INCLUDE_UTIL_GRAPHPRINTER_H_ */
+#endif /* INCLUDE_GRAPHS_GRAPHPRINTER_H_ */

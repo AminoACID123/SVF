@@ -34,7 +34,8 @@ using namespace SVF;
 
 SaberCheckerAPI* SaberCheckerAPI::ckAPI = nullptr;
 
-namespace {
+namespace
+{
 
 /// string and type pair
 struct ei_pair
@@ -75,9 +76,9 @@ static const ei_pair ei_pairs[]=
     {"xmalloc", SaberCheckerAPI::CK_ALLOC},
     {"SSL_CTX_new", SaberCheckerAPI::CK_ALLOC},
     {"SSL_new", SaberCheckerAPI::CK_ALLOC},
-	{"VOS_MemAlloc", SaberCheckerAPI::CK_ALLOC},
+    {"VOS_MemAlloc", SaberCheckerAPI::CK_ALLOC},
 
-	{"VOS_MemFree", SaberCheckerAPI::CK_FREE},
+    {"VOS_MemFree", SaberCheckerAPI::CK_FREE},
     {"cfree", SaberCheckerAPI::CK_FREE},
     {"free", SaberCheckerAPI::CK_FREE},
     {"free_all_mem", SaberCheckerAPI::CK_FREE},
@@ -96,6 +97,7 @@ static const ei_pair ei_pairs[]=
     {"xfree", SaberCheckerAPI::CK_FREE},
     {"SSL_CTX_free", SaberCheckerAPI::CK_FREE},
     {"SSL_free", SaberCheckerAPI::CK_FREE},
+    {"XFree", SaberCheckerAPI::CK_FREE},
 
     {"fopen", SaberCheckerAPI::CK_FOPEN},
     {"\01_fopen", SaberCheckerAPI::CK_FOPEN},

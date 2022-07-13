@@ -68,7 +68,7 @@ public:
     };
 
     /// Constructor
-    BVDataPTAImpl(PAG* pag, PointerAnalysis::PTATY type, bool alias_check = true);
+    BVDataPTAImpl(SVFIR* pag, PointerAnalysis::PTATY type, bool alias_check = true);
 
     /// Destructor
     virtual ~BVDataPTAImpl()
@@ -91,6 +91,7 @@ public:
     {
         delete ptD;
         ptD = nullptr;
+        ptCache.clear();
     }
 
     /// Get points-to and reverse points-to
@@ -165,11 +166,7 @@ protected:
 
 
     /// Finalization of pointer analysis, and normalize points-to information to Bit Vector representation
-    virtual void finalize()
-    {
-        normalizePointsTo();
-        PointerAnalysis::finalize();
-    }
+    virtual void finalize();
 
     /// Update callgraph. This should be implemented by its subclass.
     virtual inline bool updateCallGraph(const CallSiteToFunPtrMap&)
@@ -220,10 +217,6 @@ private:
     PersistentPointsToCache<PointsTo> ptCache;
 
 public:
-    /// Interface expose to users of our pointer analysis, given Location infos
-    virtual AliasResult alias(const MemoryLocation  &LocA,
-                              const MemoryLocation  &LocB);
-
     /// Interface expose to users of our pointer analysis, given Value infos
     virtual AliasResult alias(const Value* V1,
                               const Value* V2);
@@ -264,7 +257,7 @@ public:
     typedef Map<NodeID,CPtSet> PtrToCPtsMap;	 /// map a pointer to its conditional points-to set
 
     /// Constructor
-    CondPTAImpl(PAG* pag, PointerAnalysis::PTATY type) : PointerAnalysis(pag, type), normalized(false)
+    CondPTAImpl(SVFIR* pag, PointerAnalysis::PTATY type) : PointerAnalysis(pag, type), normalized(false)
     {
         if (type == PathS_DDA || type == Cxt_DDA)
             ptD = new MutPTDataTy();
@@ -355,9 +348,9 @@ public:
         expandedCpts = cpts;;
         for(typename CPtSet::const_iterator cit = cpts.begin(), ecit=cpts.end(); cit!=ecit; ++cit)
         {
-            if(pag->getBaseObjNode(cit->get_id())==cit->get_id())
+            if(pag->getBaseObjVar(cit->get_id())==cit->get_id())
             {
-                NodeBS& fields = pag->getAllFieldsObjNode(cit->get_id());
+                NodeBS& fields = pag->getAllFieldsObjVars(cit->get_id());
                 for(NodeBS::iterator it = fields.begin(), eit = fields.end(); it!=eit; ++it)
                 {
                     CVar cvar(cit->get_cond(),*it);
@@ -510,12 +503,6 @@ public:
         return objToNSRevPtsMap[obj];
     }
 
-    /// Interface expose to users of our pointer analysis, given Location infos
-    virtual inline AliasResult alias(const MemoryLocation &LocA,
-                                     const MemoryLocation  &LocB)
-    {
-        return alias(LocA.Ptr, LocB.Ptr);
-    }
     /// Interface expose to users of our pointer analysis, given Value infos
     virtual inline AliasResult alias(const Value* V1, const Value* V2)
     {
@@ -539,15 +526,15 @@ public:
         CPtSet cpts2;
         expandFIObjs(pts2,cpts2);
         if (containBlackHoleNode(cpts1) || containBlackHoleNode(cpts2))
-            return llvm::AliasResult::MayAlias;
+            return AliasResult::MayAlias;
         else if(this->getAnalysisTy()==PathS_DDA && contains(cpts1,cpts2) && contains(cpts2,cpts1))
         {
-            return llvm::AliasResult::MustAlias;
+            return AliasResult::MustAlias;
         }
         else if(overlap(cpts1,cpts2))
-            return llvm::AliasResult::MayAlias;
+            return AliasResult::MayAlias;
         else
-            return llvm::AliasResult::NoAlias;
+            return AliasResult::NoAlias;
     }
     /// Test blk node for cpts
     inline bool containBlackHoleNode(const CPtSet& cpts)
@@ -577,16 +564,16 @@ public:
     {
         for (OrderedNodeSet::iterator nIter = this->getAllValidPtrs().begin(); nIter != this->getAllValidPtrs().end(); ++nIter)
         {
-            const PAGNode* node = this->getPAG()->getPAGNode(*nIter);
+            const PAGNode* node = this->getPAG()->getGNode(*nIter);
             if (this->getPAG()->isValidTopLevelPtr(node))
             {
-                if (SVFUtil::isa<DummyObjPN>(node))
+                if (SVFUtil::isa<DummyObjVar>(node))
                 {
                     SVFUtil::outs() << "##<Blackhole or constant> id:" << node->getId();
                 }
-                else if (!SVFUtil::isa<DummyValPN>(node))
+                else if (!SVFUtil::isa<DummyValVar>(node))
                 {
-                    SVFUtil::outs() << "##<" << node->getValue()->getName() << "> ";
+                    SVFUtil::outs() << "##<" << node->getValue()->getName().str() << "> ";
                     //SVFUtil::outs() << "Source Loc: " << SVFUtil::getSourceLoc(node->getValue());
                 }
 

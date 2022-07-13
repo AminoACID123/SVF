@@ -172,7 +172,7 @@ public:
         const CoreBitVectorIterator operator++(int);
 
         /// Dereference: *it.
-        const u32_t operator*(void) const;
+        u32_t operator*(void) const;
 
         /// Equality: *this == rhs.
         bool operator==(const CoreBitVectorIterator &rhs) const;
@@ -198,6 +198,15 @@ private:
     u32_t offset;
     /// Our actual bit vector.
     std::vector<Word> words;
+};
+
+template <>
+struct Hash<CoreBitVector>
+{
+    size_t operator()(const CoreBitVector &cbv) const
+    {
+        return cbv.hash();
+    }
 };
 
 };

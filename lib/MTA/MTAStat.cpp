@@ -13,6 +13,7 @@
 #include "MTA/FSMPTA.h"
 #include "MTA/MTAAnnotator.h"
 #include "Graphs/ThreadCallGraph.h"
+#include "SVF-FE/BasicTypes.h"
 
 using namespace SVF;
 
@@ -63,7 +64,7 @@ void MTAStat::performThreadCallGraphStat(ThreadCallGraph* tcg)
     PTNumStatMap["NumOfIndForkEdge"] = numOfIndForkEdge;
     PTNumStatMap["NumOfIndCallEdge"] = tcg->getNumOfResolvedIndCallEdge();
 
-    std::cout << "\n****Thread Call Graph Statistics****\n";
+    SVFUtil::outs() << "\n****Thread Call Graph Statistics****\n";
     PTAStat::printStat();
 }
 
@@ -79,7 +80,7 @@ void MTAStat::performTCTStat(TCT* tct)
     PTNumStatMap["NumOfTCTEdge"] = tct->getTCTEdgeNum();
     PTNumStatMap["MaxCxtSize"] = tct->getMaxCxtSize();
     timeStatMap["BuildingTCTTime"] = TCTTime;
-    std::cout << "\n****Thread Creation Tree Statistics****\n";
+    SVFUtil::outs() << "\n****Thread Creation Tree Statistics****\n";
     PTAStat::printStat();
 }
 
@@ -148,7 +149,7 @@ void MTAStat::performMHPPairStat(MHP* mhp, LockAnalysis* lsa)
     timeStatMap["MHPAnalysisTime"] = MHPTime;
     timeStatMap["MFSPTATime"] = FSMPTATime;
 
-    std::cout << "\n****MHP Stmt Pairs Statistics****\n";
+    SVFUtil::outs() << "\n****MHP Stmt Pairs Statistics****\n";
     PTAStat::printStat();
 }
 
@@ -169,7 +170,7 @@ void MTAStat::performAnnotationStat(MTAAnnotator* anno)
     PTNumStatMap["NumOfAnnotatedLoad"] = anno->numOfAnnotatedLd;
     timeStatMap["AnnotationTime"] = AnnotationTime;
 
-    std::cout << "\n****Annotation Statistics****\n";
+    SVFUtil::outs() << "\n****Annotation Statistics****\n";
     PTAStat::printStat();
 }
 

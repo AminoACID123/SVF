@@ -31,7 +31,7 @@
 #include "Util/Options.h"
 #include "SABER/SrcSnkDDA.h"
 #include "Graphs/SVFGStat.h"
-#include "SVF-FE/PAGBuilder.h"
+#include "SVF-FE/SVFIRBuilder.h"
 #include "Util/Options.h"
 #include "WPA/Andersen.h"
 
@@ -41,11 +41,14 @@ using namespace SVFUtil;
 /// Initialize analysis
 void SrcSnkDDA::initialize(SVFModule* module)
 {
-	PAGBuilder builder;
-	PAG* pag = builder.build(module);
+    SVFIRBuilder builder;
+    SVFIR* pag = builder.build(module);
 
     AndersenWaveDiff* ander = AndersenWaveDiff::createAndersenWaveDiff(pag);
-    svfg =  memSSA.buildPTROnlySVFG(ander);
+    if(Options::SABERFULLSVFG)
+        svfg =  memSSA.buildFullSVFG(ander);
+    else
+        svfg =  memSSA.buildPTROnlySVFG(ander);
     setGraph(memSSA.getSVFG());
     ptaCallGraph = ander->getPTACallGraph();
     //AndersenWaveDiff::releaseAndersenWaveDiff();
@@ -156,10 +159,11 @@ bool SrcSnkDDA::isInAWrapper(const SVFGNode* src, CallSiteSet& csIdSet)
             else
             {
                 const SVFGNode* succ = edge->getDstNode();
-                if(SVFUtil::isa<IntraDirSVFGEdge>(edge)){
+                if(SVFUtil::isa<IntraDirSVFGEdge>(edge))
+                {
                     if (SVFUtil::isa<CopySVFGNode>(succ) || SVFUtil::isa<GepSVFGNode>(succ)
-                        || SVFUtil::isa<PHISVFGNode>(succ) || SVFUtil::isa<FormalRetSVFGNode>(succ)
-                        || SVFUtil::isa<ActualRetSVFGNode>(succ) || SVFUtil::isa<StoreSVFGNode>(succ))
+                            || SVFUtil::isa<PHISVFGNode>(succ) || SVFUtil::isa<FormalRetSVFGNode>(succ)
+                            || SVFUtil::isa<ActualRetSVFGNode>(succ) || SVFUtil::isa<StoreSVFGNode>(succ))
                     {
                         worklist.push(succ);
                     }

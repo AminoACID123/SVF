@@ -1,13 +1,11 @@
 #ifndef INCLUDE_SVF_FE_GRAPH2JSON_H_
 #define INCLUDE_SVF_FE_GRAPH2JSON_H_
 
-#include "Graphs/PAG.h"
-#include "Graphs/PAGEdge.h"
-#include "Graphs/PAGNode.h"
+#include "MemoryModel/SVFIR.h"
 #include "Graphs/ICFG.h"
 #include "Graphs/ICFGNode.h"
 #include "Graphs/ICFGEdge.h"
-#include "SVF-FE/LLVMUtil.h"
+#include "Util/SVFUtil.h"
 
 namespace SVF
 {

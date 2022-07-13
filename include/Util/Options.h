@@ -5,6 +5,7 @@
 
 #include <sstream>
 #include "FastCluster/fastcluster.h"
+#include "MemoryModel/PTAStat.h"
 #include "MemoryModel/PointerAnalysisImpl.h"
 #include "Util/NodeIDAllocator.h"
 #include "MSSA/MemSSA.h"
@@ -18,6 +19,8 @@ class Options
 {
 public:
     Options(void) = delete;
+
+    static const llvm::cl::opt<enum PTAStat::ClockType> ClockType;
 
     /// If set, only return the clock when getClk is called as getClk(true).
     /// Retrieving the clock is slow but it should be fine for a few calls.
@@ -70,6 +73,9 @@ public:
     /// Time limit for the Andersen's analyses.
     static const llvm::cl::opt<unsigned> AnderTimeLimit;
 
+    /// Number of threads for the versioning phase.
+    static const llvm::cl::opt<unsigned> VersioningThreads;
+
     // ContextDDA.cpp
     static const llvm::cl::opt<unsigned long long> CxtBudget;
 
@@ -102,7 +108,7 @@ public:
     // Offline constraint graph (OfflineConsG.cpp)
     static const llvm::cl::opt<bool> OCGDotGraph;
 
-    // Program Assignment Graph for pointer analysis (PAG.cpp)
+    // Program Assignment Graph for pointer analysis (SVFIR.cpp)
     static llvm::cl::opt<bool> HandBlackHole;
     static const llvm::cl::opt<bool> FirstFieldEqBase;
 
@@ -114,7 +120,7 @@ public:
     // Sparse value-flow graph (VFG.cpp)
     static const llvm::cl::opt<bool> DumpVFG;
 
-     // Location set for modeling abstract memory object (LocationSet.cpp)
+    // Location set for modeling abstract memory object (LocationSet.cpp)
     static const llvm::cl::opt<bool> SingleStride;
 
     // Base class of pointer analyses (PointerAnalysis.cpp)
@@ -125,7 +131,7 @@ public:
     static const llvm::cl::opt<bool> PStat;
     static const llvm::cl::opt<unsigned> StatBudget;
     static const llvm::cl::opt<bool> PAGDotGraph;
-    static const llvm::cl::opt<bool> PAGDotGraphShorter;
+    static const llvm::cl::opt<bool> ShowSVFIRValue;
     static const llvm::cl::opt<bool> DumpICFG;
     static const llvm::cl::opt<bool> CallGraphDotGraph;
     static const llvm::cl::opt<bool> PAGPrint;
@@ -152,6 +158,9 @@ public:
     static const llvm::cl::opt<bool> SingleVFG;
     static llvm::cl::opt<bool> OPTSVFG;
 
+    static const llvm::cl::opt<std :: string> WriteSVFG;
+    static const llvm::cl::opt<std :: string> ReadSVFG;
+
     // FSMPTA.cpp
     static const llvm::cl::opt<bool> UsePCG;
     static const llvm::cl::opt<bool> IntraLock;
@@ -174,8 +183,8 @@ public:
 
     // MTAResultValidator.cpp
     static const llvm::cl::opt<bool> PrintValidRes;
-	
-	static const llvm::cl::opt<bool> LockValid;
+
+    static const llvm::cl::opt<bool> LockValid;
     //MTAStat.cpp
     static const llvm::cl::opt<bool> AllPairMHP;
 
@@ -205,6 +214,7 @@ public:
     // SymbolTableInfo.cpp
     static const llvm::cl::opt<bool> LocMemModel;
     static const llvm::cl::opt<bool> ModelConsts;
+    static const llvm::cl::opt<bool> ModelArrays;
     static const llvm::cl::opt<bool> SymTabPrint;
 
     // Conditions.cpp
@@ -227,23 +237,26 @@ public:
     static const llvm::cl::opt<bool> PtsDiff;
     static const llvm::cl::opt<bool> MergePWC;
 
-    // FlowSensitive.cpp
-    static const llvm::cl::opt<bool> CTirAliasEval;
-
-    //FlowSensitiveTBHC.cpp
-    static const llvm::cl::opt<bool> TBHCStoreReuse;
-    static const llvm::cl::opt<bool> TBHCAllReuse;
-
-    // TypeAnalysis.cpp
-    static const llvm::cl::opt<bool> GenICFG;
-
-    //WPAPass.cpp
+    // WPAPass.cpp
     static const llvm::cl::opt<bool> AnderSVFG;
-    static const llvm::cl::opt<bool> WPAOPTSVFG;
+    static const llvm::cl::opt<bool> SABERFULLSVFG;
     static const llvm::cl::opt<bool> PrintAliases;
     static llvm::cl::bits<PointerAnalysis::PTATY> PASelected;
     static llvm::cl::bits<WPAPass::AliasCheckRule> AliasRule;
 
+    // DOTGraphTraits
+    static const llvm::cl::opt<bool> ShowHiddenNode;
+
+    // CFL option
+    static const llvm::cl::opt<std::string> GrammarFilename;
+    static const llvm::cl::opt<std::string> InputFilename;
+    static const llvm::cl::opt<bool> GraphIsFromDot;
+    static const llvm::cl::opt<bool> PrintCFL;
+    static const llvm::cl::opt<bool> FlexSymMap;
+
+    // Loop Analysis
+    static const llvm::cl::opt<bool> LoopAnalysis;
+    static const llvm::cl::opt<unsigned> LoopBound;
 };
 }  // namespace SVF
 

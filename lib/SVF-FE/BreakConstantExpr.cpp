@@ -40,7 +40,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "break-constgeps"
 
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/Constants.h"
@@ -50,6 +49,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/InstIterator.h"
 
+#include "SVF-FE/BasicTypes.h"
 #include "SVF-FE/BreakConstantExpr.h"
 
 #include <iostream>
@@ -61,15 +61,13 @@ using namespace SVF;
 // Identifier variable for the pass
 char BreakConstantGEPs::ID = 0;
 char MergeFunctionRets::ID = 0;
+
+#define DEBUG_TYPE "break-constgeps"
+
 // Statistics
 STATISTIC (GEPChanges,   "Number of Converted GEP Constant Expressions");
 STATISTIC (TotalChanges, "Number of Converted Constant Expressions");
 
-// Register the pass
-static llvm::RegisterPass<BreakConstantGEPs> BP ("break-constgeps",
-        "Remove GEP Constant Expressions");
-static llvm::RegisterPass<MergeFunctionRets> MP ("merge-rets",
-        "Merge function rets into one");
 //
 // Function: hasConstantGEP()
 //

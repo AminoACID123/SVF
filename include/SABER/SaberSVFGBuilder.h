@@ -37,8 +37,6 @@
 namespace SVF
 {
 
-class PAGNode;
-
 class SaberSVFGBuilder : public SVFGBuilder
 {
 
@@ -59,9 +57,9 @@ public:
     }
 
     /// Add ActualParmVFGNode
-    inline void addActualParmVFGNode(const PAGNode* pagNode, const CallBlockNode* cs)
+    inline void addActualParmVFGNode(const PAGNode* pagNode, const CallICFGNode* cs)
     {
-    	svfg->addActualParmVFGNode(pagNode, cs);
+        svfg->addActualParmVFGNode(pagNode, cs);
     }
 
 protected:

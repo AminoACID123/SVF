@@ -7,7 +7,7 @@
  *      Author: mbarbar
  */
 
-#include "SVF-FE/LLVMUtil.h"
+#include "Util/SVFUtil.h"
 #include "WPA/WPAStat.h"
 #include "WPA/VersionedFlowSensitive.h"
 #include "MemoryModel/PointsTo.h"
@@ -17,19 +17,19 @@ using namespace SVFUtil;
 
 void VersionedFlowSensitiveStat::clearStat()
 {
-     _NumVersions         = 0;
-     _MaxVersions         = 0;
-     _NumNonEmptyVersions = 0;
-     _NumSingleVersion    = 0;
-     _NumUsedVersions     = 0;
-     _NumEmptyVersions    = 0;
-     _MaxPtsSize          = 0;
-     _MaxTopLvlPtsSize    = 0;
-     _MaxVersionPtsSize   = 0;
-     _TotalPtsSize        = 0;
-     _AvgPtsSize          = 0.0;
-     _AvgTopLvlPtsSize    = 0.0;
-     _AvgVersionPtsSize   = 0.0;
+    _NumVersions         = 0;
+    _MaxVersions         = 0;
+    _NumNonEmptyVersions = 0;
+    _NumSingleVersion    = 0;
+    _NumUsedVersions     = 0;
+    _NumEmptyVersions    = 0;
+    _MaxPtsSize          = 0;
+    _MaxTopLvlPtsSize    = 0;
+    _MaxVersionPtsSize   = 0;
+    _TotalPtsSize        = 0;
+    _AvgPtsSize          = 0.0;
+    _AvgTopLvlPtsSize    = 0.0;
+    _AvgVersionPtsSize   = 0.0;
 }
 
 void VersionedFlowSensitiveStat::performStat()
@@ -41,7 +41,7 @@ void VersionedFlowSensitiveStat::performStat()
 
     clearStat();
 
-    PAG *pag = vfspta->getPAG();
+    SVFIR *pag = vfspta->getPAG();
 
     versionStat();
     ptsSizeStat();
@@ -49,14 +49,14 @@ void VersionedFlowSensitiveStat::performStat()
     u32_t fiObjNumber = 0;
     u32_t fsObjNumber = 0;
     Set<SymID> nodeSet;
-    for (PAG::const_iterator it = pag->begin(); it != pag->end(); ++it)
+    for (SVFIR::const_iterator it = pag->begin(); it != pag->end(); ++it)
     {
         NodeID nodeId = it->first;
         PAGNode* pagNode = it->second;
-        if (SVFUtil::isa<ObjPN>(pagNode))
+        if (SVFUtil::isa<ObjVar>(pagNode))
         {
             const MemObj *memObj = pag->getBaseObj(nodeId);
-            SymID baseId = memObj->getSymId();
+            SymID baseId = memObj->getId();
             if (nodeSet.insert(baseId).second)
             {
                 if (memObj->isFieldInsensitive()) fiObjNumber++;
@@ -95,9 +95,7 @@ void VersionedFlowSensitiveStat::performStat()
     timeStatMap["PhiTime"]            = vfspta->phiTime;
     timeStatMap["meldLabelingTime"]   = vfspta->meldLabelingTime;
     timeStatMap["PrelabelingTime"]    = vfspta->prelabelingTime;
-    timeStatMap["RelianceTime"]       = vfspta->relianceTime;
     timeStatMap["VersionPropTime"]    = vfspta->versionPropTime;
-    timeStatMap["MeldMappingTime"]    = vfspta->meldMappingTime;
 
     PTNumStatMap[TotalNumOfPointers]  = pag->getValueNodeNum() + pag->getFieldValNodeNum();
     PTNumStatMap[TotalNumOfObjects]   = pag->getObjectNodeNum() + pag->getFieldObjNodeNum();
@@ -147,54 +145,44 @@ void VersionedFlowSensitiveStat::performStat()
     timeStatMap["AverageSCCSize"]   = (vfspta->numOfSCC == 0) ? 0 :
                                       ((double)vfspta->numOfNodesInSCC / vfspta->numOfSCC);
 
-    std::cout << "\n****Versioned Flow-Sensitive Pointer Analysis Statistics****\n";
+    SVFUtil::outs() << "\n****Versioned Flow-Sensitive Pointer Analysis Statistics****\n";
     PTAStat::printStat();
 }
 
 void VersionedFlowSensitiveStat::versionStat(void)
 {
-    Map<NodeID, Set<Version>> versions;
-    for (VersionedFlowSensitive::LocVersionMap::value_type &lov : vfspta->consume)
-    {
-        for (VersionedFlowSensitive::ObjToVersionMap::value_type &ov : lov.second)
-        {
-            versions[ov.first].insert(ov.second);
-        }
-    }
-
-    for (VersionedFlowSensitive::LocVersionMap::value_type &lov : vfspta->yield)
-    {
-        for (VersionedFlowSensitive::ObjToVersionMap::value_type &ov : lov.second)
-        {
-            versions[ov.first].insert(ov.second);
-        }
-    }
+    // TODO! Need to merge yield/consume.
+    _NumSingleVersion = 0;
+    _MaxVersions = 0;
 
     u32_t totalVersionPtsSize = 0;
-    for (Map<NodeID, Set<Version>>::value_type &ovs : versions)
+    for (const VersionedFlowSensitive::LocVersionMap *lvm :
+            {
+                &vfspta->consume, &vfspta->yield
+            })
     {
-        NodeID o = ovs.first;
-        Set<Version> vs = ovs.second;
-
-        u32_t numOVersions = vs.size();
-        _NumVersions += numOVersions;
-        if (numOVersions > _MaxVersions) _MaxVersions = numOVersions;
-        if (numOVersions == 1) ++_NumSingleVersion;
-
-        for (const Set<Version>::value_type &v : vs)
+        for (const VersionedFlowSensitive::ObjToVersionMap  &lov : *lvm)
         {
-            // If the version was just over-approximate and never accessed, ignore.
-            // TODO: with vPtD changed there is no interface to check if the PTS
-            //       exists; an emptiness check is *not* an existence check.
-            if (vfspta->vPtD->getPts(vfspta->atKey(o, v)).empty()) continue;
+            for (const VersionedFlowSensitive::ObjToVersionMap::value_type &ov : lov)
+            {
+                const NodeID o = ov.first;
+                const Version v = ov.second;
 
-            const PointsTo &ovPts = vfspta->vPtD->getPts(vfspta->atKey(o, v));
-            if (!ovPts.empty()) ++_NumNonEmptyVersions;
-            else ++_NumEmptyVersions;
+                ++_NumVersions;
 
-            _TotalPtsSize += ovPts.count();
-            totalVersionPtsSize += ovPts.count();
-            if (ovPts.count() > _MaxVersionPtsSize) _MaxVersionPtsSize = ovPts.count();
+                // If the version was just over-approximate and never accessed, ignore.
+                // TODO: with vPtD changed there is no interface to check if the PTS
+                //       exists; an emptiness check is *not* an existence check.
+                if (vfspta->vPtD->getPts(vfspta->atKey(o, v)).empty()) continue;
+
+                const PointsTo &ovPts = vfspta->vPtD->getPts(vfspta->atKey(o, v));
+                if (!ovPts.empty()) ++_NumNonEmptyVersions;
+                else ++_NumEmptyVersions;
+
+                _TotalPtsSize += ovPts.count();
+                totalVersionPtsSize += ovPts.count();
+                if (ovPts.count() > _MaxVersionPtsSize) _MaxVersionPtsSize = ovPts.count();
+            }
         }
     }
 
@@ -209,7 +197,7 @@ void VersionedFlowSensitiveStat::ptsSizeStat()
 {
     u32_t totalValidTopLvlPointers = 0;
     u32_t totalTopLvlPtsSize = 0;
-    for (PAG::iterator it = vfspta->getPAG()->begin(); it != vfspta->getPAG()->end(); ++it)
+    for (SVFIR::iterator it = vfspta->getPAG()->begin(); it != vfspta->getPAG()->end(); ++it)
     {
         if (!vfspta->getPAG()->isValidTopLevelPtr(it->second)) continue;
 

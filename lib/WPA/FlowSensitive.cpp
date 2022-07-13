@@ -30,12 +30,10 @@
 #include "Util/Options.h"
 #include "SVF-FE/DCHG.h"
 #include "Util/SVFModule.h"
-#include "Util/TypeBasedHeapCloning.h"
 #include "WPA/WPAStat.h"
 #include "WPA/FlowSensitive.h"
 #include "WPA/Andersen.h"
 #include "MemoryModel/PointsTo.h"
-
 
 using namespace SVF;
 using namespace SVFUtil;
@@ -72,11 +70,7 @@ void FlowSensitive::initialize()
         getPtCache().reset();
     }
 
-    // When evaluating ctir aliases, we want the whole SVFG.
-    if(Options::OPTSVFG)
-        svfg = Options::CTirAliasEval ? memSSA.buildFullSVFG(ander) : memSSA.buildPTROnlySVFG(ander);
-    else
-        svfg = memSSA.buildPTROnlySVFGWithoutOPT(ander);
+    svfg = memSSA.buildPTROnlySVFG(ander);
 
     setGraph(svfg);
     //AndersenWaveDiff::releaseAndersenWaveDiff();
@@ -118,11 +112,6 @@ void FlowSensitive::analyze()
     double end = stat->getClk(true);
     solveTime += (end - start) / TIMEINTERVAL;
 
-    if (Options::CTirAliasEval)
-    {
-        printCTirAliasStats();
-    }
-
     /// finalize the analysis
     finalize();
 }
@@ -132,8 +121,8 @@ void FlowSensitive::analyze()
  */
 void FlowSensitive::finalize()
 {
-	if(Options::DumpVFG)
-		svfg->dump("fs_solved", true);
+    if(Options::DumpVFG)
+        svfg->dump("fs_solved", true);
 
     NodeStack& nodeStack = WPASolver<SVFG*>::SCCDetect();
     while (nodeStack.empty() == false)
@@ -170,7 +159,7 @@ void FlowSensitive::finalize()
         }
     }
 
-    PointerAnalysis::finalize();
+    BVDataPTAImpl::finalize();
 }
 
 /*!
@@ -378,7 +367,7 @@ bool FlowSensitive::propAlongIndirectEdge(const IndirectSVFGEdge* edge)
         if (isFieldInsensitive(ptd))
         {
             /// If this is a field-insensitive obj, propagate all field node's pts
-            const NodeBS& allFields = getAllFieldsObjNode(ptd);
+            const NodeBS& allFields = getAllFieldsObjVars(ptd);
             for (NodeBS::iterator fieldIt = allFields.begin(), fieldEit = allFields.end();
                     fieldIt != fieldEit; ++fieldIt)
             {
@@ -422,7 +411,7 @@ bool FlowSensitive::processAddr(const AddrSVFGNode* addr)
     /// TODO: If this object has been set as field-insensitive, just
     ///       add the insensitive object node into dst pointer's pts.
     if (isFieldInsensitive(srcID))
-        srcID = getFIObjNode(srcID);
+        srcID = getFIObjVar(srcID);
     bool changed = addPts(addr->getPAGDstNodeID(), srcID);
     double end = stat->getClk();
     addrTime += (end - start) / TIMEINTERVAL;
@@ -472,7 +461,8 @@ bool FlowSensitive::processGep(const GepSVFGNode* edge)
     const PointsTo& srcPts = getPts(edge->getPAGSrcNodeID());
 
     PointsTo tmpDstPts;
-    if (SVFUtil::isa<VariantGepPE>(edge->getPAGEdge()))
+    const GepStmt* gepStmt = SVFUtil::cast<GepStmt>(edge->getPAGEdge());
+    if (gepStmt->isVariantFieldGep())
     {
         for (NodeID o : srcPts)
         {
@@ -483,10 +473,10 @@ bool FlowSensitive::processGep(const GepSVFGNode* edge)
             }
 
             setObjFieldInsensitive(o);
-            tmpDstPts.set(getFIObjNode(o));
+            tmpDstPts.set(getFIObjVar(o));
         }
     }
-    else if (const NormalGepPE* normalGep = SVFUtil::dyn_cast<NormalGepPE>(edge->getPAGEdge()))
+    else
     {
         for (NodeID o : srcPts)
         {
@@ -496,13 +486,9 @@ bool FlowSensitive::processGep(const GepSVFGNode* edge)
                 continue;
             }
 
-            NodeID fieldSrcPtdNode = getGepObjNode(o, normalGep->getLocationSet());
+            NodeID fieldSrcPtdNode = getGepObjVar(o, gepStmt->getLocationSet());
             tmpDstPts.set(fieldSrcPtdNode);
         }
-    }
-    else
-    {
-        assert(false && "FlowSensitive::processGep: New type GEP edge type?");
     }
 
     if (unionPts(edge->getPAGDstNodeID(), tmpDstPts))
@@ -542,7 +528,7 @@ bool FlowSensitive::processLoad(const LoadSVFGNode* load)
         {
             /// If the ptd is a field-insensitive node, we should also get all field nodes'
             /// points-to sets and pass them to pagDst.
-            const NodeBS& allFields = getAllFieldsObjNode(ptd);
+            const NodeBS& allFields = getAllFieldsObjVars(ptd);
             for (NodeBS::iterator fieldIt = allFields.begin(), fieldEit = allFields.end();
                     fieldIt != fieldEit; ++fieldIt)
             {
@@ -661,7 +647,7 @@ bool FlowSensitive::updateCallGraph(const CallSiteToFunPtrMap& callsites)
     const CallEdgeMap &andersCallEdgeMap = ander->getIndCallMap();
     for (typename CallEdgeMap::value_type &csfs : newEdges)
     {
-        const CallBlockNode *potentialCallSite = csfs.first;
+        const CallICFGNode *potentialCallSite = csfs.first;
         FunctionSet &potentialFunctionSet = csfs.second;
 
         // Check this callsite even calls anything per Andersen's.
@@ -674,7 +660,7 @@ bool FlowSensitive::updateCallGraph(const CallSiteToFunPtrMap& callsites)
 
         const FunctionSet &andersFunctionSet = andersFunctionSetIt->second;
         for (FunctionSet::iterator potentialFunctionIt = potentialFunctionSet.begin();
-             potentialFunctionIt != potentialFunctionSet.end(); )
+                potentialFunctionIt != potentialFunctionSet.end(); )
         {
             const SVFFunction *potentialFunction = *potentialFunctionIt;
             if (andersFunctionSet.find(potentialFunction) == andersFunctionSet.end())
@@ -709,7 +695,7 @@ void FlowSensitive::connectCallerAndCallee(const CallEdgeMap& newEdges, SVFGEdge
     CallEdgeMap::const_iterator eiter = newEdges.end();
     for (; iter != eiter; iter++)
     {
-        const CallBlockNode* cs = iter->first;
+        const CallICFGNode* cs = iter->first;
         const FunctionSet & functions = iter->second;
         for (FunctionSet::const_iterator func_iter = functions.begin(); func_iter != functions.end(); func_iter++)
         {
@@ -755,7 +741,7 @@ void FlowSensitive::updateConnectedNodes(const SVFGEdgeSetTy& edges)
                 if (isFieldInsensitive(ptd))
                 {
                     /// If this is a field-insensitive obj, propagate all field node's pts
-                    const NodeBS& allFields = getAllFieldsObjNode(ptd);
+                    const NodeBS& allFields = getAllFieldsObjVars(ptd);
                     for (NodeBS::iterator fieldIt = allFields.begin(), fieldEit = allFields.end();
                             fieldIt != fieldEit; ++fieldIt)
                     {
@@ -793,7 +779,7 @@ bool FlowSensitive::propVarPtsAfterCGUpdated(NodeID var, const SVFGNode* src, co
 void FlowSensitive::cluster(void)
 {
     std::vector<std::pair<unsigned, unsigned>> keys;
-    for (PAG::iterator pit = pag->begin(); pit != pag->end(); ++pit) keys.push_back(std::make_pair(pit->first, 1));
+    for (SVFIR::iterator pit = pag->begin(); pit != pag->end(); ++pit) keys.push_back(std::make_pair(pit->first, 1));
 
     PointsTo::MappingPtr nodeMapping =
         std::make_shared<std::vector<NodeID>>(NodeIDAllocator::Clusterer::cluster(ander, keys, candidateMappings, "aux-ander"));
@@ -820,71 +806,6 @@ void FlowSensitive::plainMap(void) const
     PointsTo::setCurrentBestNodeMapping(plainMapping, reversePlainMapping);
 }
 
-void FlowSensitive::printCTirAliasStats(void)
-{
-    DCHGraph *dchg = SVFUtil::dyn_cast<DCHGraph>(chgraph);
-    assert(dchg && "eval-ctir-aliases needs DCHG.");
-
-    // < SVFG node ID (loc), PAG node of interest (top-level pointer) >.
-    Set<std::pair<NodeID, NodeID>> cmpLocs;
-    for (SVFG::iterator npair = svfg->begin(); npair != svfg->end(); ++npair)
-    {
-        NodeID loc = npair->first;
-        SVFGNode *node = npair->second;
-
-        // Only care about loads, stores, and GEPs.
-        if (StmtSVFGNode *stmt = SVFUtil::dyn_cast<StmtSVFGNode>(node))
-        {
-            if (!SVFUtil::isa<LoadSVFGNode>(stmt) && !SVFUtil::isa<StoreSVFGNode>(stmt)
-                    && !SVFUtil::isa<GepSVFGNode>(stmt))
-            {
-                continue;
-            }
-
-            if (!TypeBasedHeapCloning::getRawCTirMetadata(stmt->getInst() ? stmt->getInst() : stmt->getPAGEdge()->getValue()))
-            {
-                continue;
-            }
-
-            NodeID p = 0;
-            if (SVFUtil::isa<LoadSVFGNode>(stmt))
-            {
-                p = stmt->getPAGSrcNodeID();
-            }
-            else if (SVFUtil::isa<StoreSVFGNode>(stmt))
-            {
-                p = stmt->getPAGDstNodeID();
-            }
-            else if (SVFUtil::isa<GepSVFGNode>(stmt))
-            {
-                p = stmt->getPAGSrcNodeID();
-            }
-            else
-            {
-                // Not interested.
-                continue;
-            }
-
-            cmpLocs.insert(std::make_pair(loc, p));
-        }
-    }
-
-    unsigned mayAliases = 0, noAliases = 0;
-    countAliases(cmpLocs, &mayAliases, &noAliases);
-
-    unsigned total = mayAliases + noAliases;
-    llvm::outs() << "eval-ctir-aliases "
-                 << total << " "
-                 << mayAliases << " "
-                 << noAliases << " "
-                 << "\n";
-    llvm::outs() << "  " << "TOTAL : " << total << "\n"
-                 << "  " << "MAY   : " << mayAliases << "\n"
-                 << "  " << "MAY % : " << 100 * ((double)mayAliases/(double)(total)) << "\n"
-                 << "  " << "NO    : " << noAliases << "\n"
-                 << "  " << "NO  % : " << 100 * ((double)noAliases/(double)(total)) << "\n";
-}
-
 void FlowSensitive::countAliases(Set<std::pair<NodeID, NodeID>> cmp, unsigned *mayAliases, unsigned *noAliases)
 {
     for (std::pair<NodeID, NodeID> locPA : cmp)
@@ -899,10 +820,10 @@ void FlowSensitive::countAliases(Set<std::pair<NodeID, NodeID>> cmp, unsigned *m
 
             switch (alias(p, q))
             {
-            case llvm::AliasResult::NoAlias:
+            case AliasResult::NoAlias:
                 ++(*noAliases);
                 break;
-            case llvm::AliasResult::MayAlias:
+            case AliasResult::MayAlias:
                 ++(*mayAliases);
                 break;
             default:

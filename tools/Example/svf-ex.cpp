@@ -29,20 +29,17 @@
 #include "SVF-FE/LLVMUtil.h"
 #include "Graphs/SVFG.h"
 #include "WPA/Andersen.h"
-#include "SVF-FE/PAGBuilder.h"
+#include "SVF-FE/SVFIRBuilder.h"
 #include "Util/Options.h"
 
 using namespace llvm;
 using namespace std;
 using namespace SVF;
 
-static llvm::cl::opt<std::string> InputFilename(cl::Positional,
-        llvm::cl::desc("<input bitcode>"), llvm::cl::init("-"));
-
 /*!
  * An example to query alias results of two LLVM values
  */
-AliasResult aliasQuery(PointerAnalysis* pta, Value* v1, Value* v2)
+SVF::AliasResult aliasQuery(PointerAnalysis* pta, Value* v1, Value* v2)
 {
     return pta->alias(v1,v2);
 }
@@ -62,7 +59,7 @@ std::string printPts(PointerAnalysis* pta, Value* val)
             ii != ie; ii++)
     {
         rawstr << " " << *ii << " ";
-        PAGNode* targetObj = pta->getPAG()->getPAGNode(*ii);
+        PAGNode* targetObj = pta->getPAG()->getGNode(*ii);
         if(targetObj->hasValue())
         {
             rawstr << "(" <<*targetObj->getValue() << ")\t ";
@@ -79,7 +76,7 @@ std::string printPts(PointerAnalysis* pta, Value* val)
  */
 void traverseOnICFG(ICFG* icfg, const Instruction* inst)
 {
-    ICFGNode* iNode = icfg->getBlockICFGNode(inst);
+    ICFGNode* iNode = icfg->getICFGNode(inst);
     FIFOWorkList<const ICFGNode*> worklist;
     Set<const ICFGNode*> visited;
     worklist.push(iNode);
@@ -88,8 +85,8 @@ void traverseOnICFG(ICFG* icfg, const Instruction* inst)
     while (!worklist.empty())
     {
         const ICFGNode* vNode = worklist.pop();
-        for (ICFGNode::const_iterator it = iNode->OutEdgeBegin(), eit =
-                    iNode->OutEdgeEnd(); it != eit; ++it)
+        for (ICFGNode::const_iterator it = vNode->OutEdgeBegin(), eit =
+                    vNode->OutEdgeEnd(); it != eit; ++it)
         {
             ICFGEdge* edge = *it;
             ICFGNode* succNode = edge->getDstNode();
@@ -107,9 +104,9 @@ void traverseOnICFG(ICFG* icfg, const Instruction* inst)
  */
 void traverseOnVFG(const SVFG* vfg, Value* val)
 {
-    PAG* pag = PAG::getPAG();
+    SVFIR* pag = SVFIR::getPAG();
 
-    PAGNode* pNode = pag->getPAGNode(pag->getValueNode(val));
+    PAGNode* pNode = pag->getGNode(pag->getValueNode(val));
     const VFGNode* vNode = vfg->getDefSVFGNode(pNode);
     FIFOWorkList<const VFGNode*> worklist;
     Set<const VFGNode*> visited;
@@ -135,7 +132,7 @@ void traverseOnVFG(const SVFG* vfg, Value* val)
     /// Collect all LLVM Values
     for(Set<const VFGNode*>::const_iterator it = visited.begin(), eit = visited.end(); it!=eit; ++it)
     {
-        const VFGNode* node = *it;
+        // const VFGNode* node = *it;
         /// can only query VFGNode involving top-level pointers (starting with % or @ in LLVM IR)
         /// PAGNode* pNode = vfg->getLHSTopLevPtr(node);
         /// Value* val = pNode->getValue();
@@ -148,10 +145,10 @@ int main(int argc, char ** argv)
     int arg_num = 0;
     char **arg_value = new char*[argc];
     std::vector<std::string> moduleNameVec;
-    SVFUtil::processArguments(argc, argv, arg_num, arg_value, moduleNameVec);
+    LLVMUtil::processArguments(argc, argv, arg_num, arg_value, moduleNameVec);
     cl::ParseCommandLineOptions(arg_num, arg_value,
                                 "Whole Program Points-to Analysis\n");
-    
+
     if (Options::WriteAnder == "ir_annotator")
     {
         LLVMModuleSet::getLLVMModuleSet()->preProcessBCs(moduleNameVec);
@@ -160,9 +157,9 @@ int main(int argc, char ** argv)
     SVFModule* svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
     svfModule->buildSymbolTableInfo();
 
-	/// Build Program Assignment Graph (PAG)
-	PAGBuilder builder;
-	PAG* pag = builder.build(svfModule);
+    /// Build Program Assignment Graph (SVFIR)
+    SVFIRBuilder builder;
+    SVFIR* pag = builder.build(svfModule);
 
     /// Create Andersen's pointer analysis
     Andersen* ander = AndersenWaveDiff::createAndersenWaveDiff(pag);
@@ -178,13 +175,14 @@ int main(int argc, char ** argv)
 
     /// ICFG
     ICFG* icfg = pag->getICFG();
+    icfg->dump("icfg");
 
     /// Value-Flow Graph (VFG)
     VFG* vfg = new VFG(callgraph);
 
     /// Sparse value-flow graph (SVFG)
-    SVFGBuilder svfBuilder;
-    SVFG* svfg = svfBuilder.buildFullSVFGWithoutOPT(ander);
+    SVFGBuilder svfBuilder(true);
+    SVFG* svfg = svfBuilder.buildFullSVFG(ander);
 
     /// Collect uses of an LLVM Value
     /// traverseOnVFG(svfg, value);
@@ -196,10 +194,12 @@ int main(int argc, char ** argv)
     delete vfg;
     delete svfg;
     AndersenWaveDiff::releaseAndersenWaveDiff();
-    PAG::releasePAG();
+    SVFIR::releaseSVFIR();
 
     LLVMModuleSet::getLLVMModuleSet()->dumpModulesToFile(".svf.bc");
+    SVF::LLVMModuleSet::releaseLLVMModuleSet();
 
+    llvm::llvm_shutdown();
     return 0;
 }
 

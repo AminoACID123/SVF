@@ -53,6 +53,9 @@ public:
     {
         return cpts;
     }
+
+    inline const NodeBS getDefSVFVars() const override;
+
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     //@{
     static inline bool classof(const MRSVFGNode *)
@@ -81,7 +84,7 @@ public:
     }
     //@}
 
-    virtual const std::string toString() const;
+    virtual const std::string toString() const override;
 };
 
 /*
@@ -91,21 +94,21 @@ class FormalINSVFGNode : public MRSVFGNode
 {
 private:
     const MRVer* ver;
-    const FunEntryBlockNode* funEntryNode; 
+    const FunEntryICFGNode* funEntryNode;
 
 public:
     /// Constructor
-    FormalINSVFGNode(NodeID id, const MRVer* resVer, const FunEntryBlockNode* funEntry): MRSVFGNode(id, FPIN)
+    FormalINSVFGNode(NodeID id, const MRVer* resVer, const FunEntryICFGNode* funEntry): MRSVFGNode(id, FPIN)
     {
         cpts = resVer->getMR()->getPointsTo();
         ver = resVer;
-        funEntryNode = funEntry; 
+        funEntryNode = funEntry;
     }
     inline const MRVer* getMRVer() const
     {
         return ver;
     }
-    inline const FunEntryBlockNode* getFunEntryNode() const
+    inline const FunEntryICFGNode* getFunEntryNode() const
     {
         return funEntryNode;
     }
@@ -136,13 +139,13 @@ class FormalOUTSVFGNode : public MRSVFGNode
 {
 private:
     const MRVer* ver;
-    const FunExitBlockNode* funExitNode; 
+    const FunExitICFGNode* funExitNode;
 
 public:
     /// Constructor
-    FormalOUTSVFGNode(NodeID id, const MRVer* ver, const FunExitBlockNode* funExitNode);
+    FormalOUTSVFGNode(NodeID id, const MRVer* ver, const FunExitICFGNode* funExitNode);
 
-    inline const FunExitBlockNode* getFunExitNode() const
+    inline const FunExitICFGNode* getFunExitNode() const
     {
         return funExitNode;
     }
@@ -177,18 +180,18 @@ public:
 class ActualINSVFGNode : public MRSVFGNode
 {
 private:
-    const CallBlockNode* cs;
+    const CallICFGNode* cs;
     const MRVer* ver;
 public:
     /// Constructor
-    ActualINSVFGNode(NodeID id, const CallBlockNode* c, const MRVer* mrver):
+    ActualINSVFGNode(NodeID id, const CallICFGNode* c, const MRVer* mrver):
         MRSVFGNode(id, APIN), cs(c)
     {
         cpts = mrver->getMR()->getPointsTo();
         ver = mrver;
     }
     /// Callsite
-    inline const CallBlockNode* getCallSite() const
+    inline const CallICFGNode* getCallSite() const
     {
         return cs;
     }
@@ -226,19 +229,19 @@ public:
 class ActualOUTSVFGNode : public MRSVFGNode
 {
 private:
-    const CallBlockNode* cs;
+    const CallICFGNode* cs;
     const MRVer* ver;
 
 public:
     /// Constructor
-    ActualOUTSVFGNode(NodeID id, const CallBlockNode* cal, const MRVer* resVer):
+    ActualOUTSVFGNode(NodeID id, const CallICFGNode* cal, const MRVer* resVer):
         MRSVFGNode(id, APOUT), cs(cal)
     {
         cpts = resVer->getMR()->getPointsTo();
         ver = resVer;
     }
     /// Callsite
-    inline const CallBlockNode* getCallSite() const
+    inline const CallICFGNode* getCallSite() const
     {
         return cs;
     }
@@ -276,7 +279,7 @@ public:
     typedef Map<u32_t,const MRVer*> OPVers;
 
 protected:
-    const MRVer* ver; 
+    const MRVer* ver;
     OPVers opVers;
 
 public:
@@ -284,9 +287,9 @@ public:
     MSSAPHISVFGNode(NodeID id, const MRVer* resVer,VFGNodeK k = MPhi): MRSVFGNode(id, k)
     {
         cpts = resVer->getMR()->getPointsTo();
-        ver = resVer; 
+        ver = resVer;
     }
-      /// Ver
+    /// Ver
     inline const MRVer* getResVer() const
     {
         return ver;
@@ -347,16 +350,14 @@ class IntraMSSAPHISVFGNode : public MSSAPHISVFGNode
 {
 
 public:
-    const MRVer* resVer;
     /// Constructor
     IntraMSSAPHISVFGNode(NodeID id, const MRVer* resVer): MSSAPHISVFGNode(id, resVer, MIntraPhi)
     {
-        resVer = resVer; 
     }
 
-     inline const MRVer* getMRVer() const
+    inline const MRVer* getMRVer() const
     {
-        return resVer;
+        return getResVer();
     }
 
     inline OPVers::const_iterator opVerBegin() const
@@ -425,7 +426,7 @@ public:
         return fun;
     }
 
-    inline const CallBlockNode* getCallSite() const
+    inline const CallICFGNode* getCallSite() const
     {
         assert(isActualOUTPHI() && "expect a actual return phi");
         return callInst;
@@ -459,7 +460,7 @@ public:
 
 private:
     const SVFFunction* fun;
-    const CallBlockNode* callInst;
+    const CallICFGNode* callInst;
 };
 
 /*
@@ -472,8 +473,14 @@ public:
         : VFGNode(id, DummyVProp), object(object), version(version)
     { }
 
-    NodeID getObject(void) const { return object; }
-    Version getVersion(void) const { return version; }
+    NodeID getObject(void) const
+    {
+        return object;
+    }
+    Version getVersion(void) const
+    {
+        return version;
+    }
 
     /// Methods to support type inquiry through isa, cast, and dyn_cast:
     //@{
@@ -492,6 +499,8 @@ public:
         return node->getNodeKind() == DummyVProp;
     }
     //@}
+
+    const NodeBS getDefSVFVars() const override;
 
 private:
     const NodeID object;

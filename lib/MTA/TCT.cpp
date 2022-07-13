@@ -9,6 +9,8 @@
 #include "MTA/TCT.h"
 #include "MTA/MTA.h"
 #include "SVF-FE/DataFlowUtil.h"
+#include "SVF-FE/BasicTypes.h"
+#include "SVF-FE/LLVMUtil.h"
 
 #include <string>
 
@@ -137,7 +139,7 @@ void TCT::markRelProcs()
  */
 void TCT::markRelProcs(const Function* fun)
 {
-	const SVFFunction* svffun = getSVFFun(fun);
+    const SVFFunction* svffun = getSVFFun(fun);
     PTACallGraphNode* cgnode = tcg->getCallGraphNode(svffun);
     FIFOWorkList<const PTACallGraphNode*> worklist;
     PTACGNodeSet visited;
@@ -221,7 +223,7 @@ void TCT::collectMultiForkedThreads()
  */
 void TCT::handleCallRelation(CxtThreadProc& ctp, const PTACallGraphEdge* cgEdge, CallSite cs)
 {
-	const SVFFunction* callee = cgEdge->getDstNode()->getFunction();
+    const SVFFunction* callee = cgEdge->getDstNode()->getFunction();
     const Function* llvmcallee = callee->getLLVMFun();
 
     CallStrCxt cxt(ctp.getContext());
@@ -474,9 +476,8 @@ void TCT::pushCxt(CallStrCxt& cxt, const Instruction* call, const Function* call
 {
 
     const Function* caller = call->getParent()->getParent();
-    const SVFFunction* svfcaller = getSVFFun(caller);
     const SVFFunction* svfcallee = getSVFFun(callee);
-    CallSiteID csId = tcg->getCallSiteID(getCallBlockNode(call), svfcallee);
+    CallSiteID csId = tcg->getCallSiteID(getCallICFGNode(call), svfcallee);
 
     /// handle calling context for candidate functions only
     if(isCandidateFun(caller) == false)
@@ -498,7 +499,7 @@ bool TCT::matchCxt(CallStrCxt& cxt, const Instruction* call, const Function* cal
 
     const Function* caller = call->getParent()->getParent();
     const SVFFunction* svfcallee = getSVFFun(callee);
-    CallSiteID csId = tcg->getCallSiteID(getCallBlockNode(call), svfcallee);
+    CallSiteID csId = tcg->getCallSiteID(getCallICFGNode(call), svfcallee);
 
     /// handle calling context for candidate functions only
     if(isCandidateFun(caller) == false)

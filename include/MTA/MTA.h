@@ -11,6 +11,7 @@
 #include <set>
 #include <vector>
 #include "Util/BasicTypes.h"
+#include "SVF-FE/BasicTypes.h"
 
 namespace SVF
 {
@@ -61,20 +62,12 @@ public:
     virtual void detect(SVFModule* module);
 
     /// Pass name
-    virtual StringRef getPassName() const
+    virtual llvm::StringRef getPassName() const
     {
         return "Multi threaded program analysis pass";
     }
 
     void dump(Module &module, MHP *mhp, LockAnalysis *lsa);
-
-    /// Get analysis usage
-    inline virtual void getAnalysisUsage(AnalysisUsage& au) const
-    {
-        /// do not intend to change the IR in this pass,
-        au.setPreservesAll();
-        au.addRequired<ScalarEvolutionWrapperPass>();
-    }
 
     // Get ScalarEvolution for Function F.
     static inline ScalarEvolution* getSE(const Function *F)
