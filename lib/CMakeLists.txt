@@ -22,6 +22,7 @@ file (GLOB SOURCES
         DDA/*.cpp
         CFL/*.cpp
         FastCluster/*.cpp
+        Bluetooth/*.cpp
 )
 
 add_llvm_library(Svf STATIC ${SOURCES} LINK_LIBS Cudd ${Z3_LIBRARIES})

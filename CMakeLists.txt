@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.13.4)
 
 project("SVF")
 
-
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.in ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/config.h @ONLY)
 
 # To support both in- and out-of-source builds,

@@ -30,9 +30,7 @@
 #include "SABER/LeakChecker.h"
 #include "SABER/FileChecker.h"
 #include "SABER/DoubleFreeChecker.h"
-#include "SABER/UnusedValueChecker.h"
 #include "Util/Options.h"
-#include <fstream>
 
 using namespace llvm;
 using namespace SVF;
@@ -46,16 +44,11 @@ static llvm::cl::opt<bool> FILECHECKER("fileck", llvm::cl::init(false),
 static llvm::cl::opt<bool> DFREECHECKER("dfree", llvm::cl::init(false),
                                         llvm::cl::desc("Double Free Detection"));
 
-static llvm::cl::opt<bool> UNUSEDVALUECHECKER("unused", llvm::cl::init(true),
-                                        llvm::cl::desc("Unused Value Detection"));
-
 int main(int argc, char ** argv)
 {
 
-    /*
     int arg_num = 0;
     char **arg_value = new char*[argc];
-    */
     std::vector<std::string> moduleNameVec;
     LLVMUtil::processArguments(argc, argv, arg_num, arg_value, moduleNameVec);
     cl::ParseCommandLineOptions(arg_num, arg_value,
@@ -65,35 +58,22 @@ int main(int argc, char ** argv)
     {
         LLVMModuleSet::getLLVMModuleSet()->preProcessBCs(moduleNameVec);
     }
-    */
-    std::ifstream bcList(InputFilename.getDefault().getValue());
-    std::string bc;
-    while (bcList >> bc)
-    {
-        moduleNameVec.push_back(bc);
-    }
 
     SVFModule* svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
     svfModule->buildSymbolTableInfo();
 
-    LeakChecker *saber = NULL;
+    LeakChecker *saber;
 
-    if (UNUSEDVALUECHECKER)
-    {
-        auto c = new UnusedValueChecker();
-        c->runOnModule(svfModule);
-    }
-    else if(LEAKCHECKER)
+    if(LEAKCHECKER)
         saber = new LeakChecker();
     else if(FILECHECKER)
         saber = new FileChecker();
     else if(DFREECHECKER)
         saber = new DoubleFreeChecker();
-    else if(LEAKCHECKER)
+    else
         saber = new LeakChecker();  // if no checker is specified, we use leak checker as the default one.
 
-
-    saber?saber->runOnModule(svfModule):1;
+    saber->runOnModule(svfModule);
 
     return 0;
 
