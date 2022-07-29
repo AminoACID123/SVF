@@ -596,6 +596,7 @@ bool Andersen::collapseField(NodeID nodeId)
             changed = true;
 
     double end = stat->getClk();
+    
     timeOfCollapse += (end - start) / TIMEINTERVAL;
 
     return changed;

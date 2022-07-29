@@ -55,7 +55,7 @@ int main(int argc, char** argv)
     svfModule->buildSymbolTableInfo();
 
     BTAnalyzer bt(svfModule);
-    bt.extractInterface();
+    bt.analyze();
     // bt.printGlobals();
     //bt.printFunctions();
 

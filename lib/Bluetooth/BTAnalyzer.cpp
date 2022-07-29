@@ -1,4 +1,5 @@
 #include "Bluetooth/BTAnalyzer.h"
+#include "SVF-FE/SVFIRBuilder.h"
 #include "Util/Options.h"
 #include "Util/SVFUtil.h"
 #include "Util/Options.h"
@@ -9,9 +10,25 @@ using namespace SVF;
 
 BTAnalyzer::BTAnalyzer(SVFModule* svfModule)
 {
+    // Initialize io_read/io_recv functions
+    Module* m = LLVMModuleSet::getLLVMModuleSet()->getModule(0);
+    assert(m->getFunction("hci_send_cmd") != nullptr);
+    assert(m->getFunction("hci_send_sco") != nullptr);
+    assert(m->getFunction("hci_send_acl") != nullptr);
+    assert(m->getFunction("hci_req_add") != nullptr);
+
+    io_send.push_back(m->getFunction("hci_send_cmd"));
+    io_send.push_back(m->getFunction("hci_send_sco"));
+    io_send.push_back(m->getFunction("hci_send_acl"));
+    io_send.push_back(m->getFunction("hci_req_add"));
+
+
+    // Build ICFG, PAG, CallGraph
     SVFIRBuilder builder;
     pag = builder.build(svfModule);
-    pag->getICFG()->dump("icfg.dot");
+    icfg = pag->getICFG();
+    AndersenWaveDiff* ander = AndersenWaveDiff::createAndersenWaveDiff(pag);
+    callgraph = ander->getPTACallGraph();    
 }
 
 void BTAnalyzer::printGlobals()
@@ -66,14 +83,34 @@ void BTAnalyzer::extractInterface()
                 for(int i=0;i<n;i++){
                     Constant* field = cs->getOperand(i);
                     if(Function* f = SVFUtil::dyn_cast<Function>(field)){
-                        interfaces.push_back(f);
+                        std::string name = f->getName().str();
+                        if(name.find("sock_no") == name.npos)
+                            interfaces.push_back(f);
                     }
                 }
             }
-
         }
     }
     for(const Function* F:interfaces){
         llvm::outs() << F->getName() << "\n";
+    }
+}
+
+void BTAnalyzer::analyze()
+{
+    if(interfaces.empty())
+        extractInterface();
+
+    for(Function* F : interfaces)
+    {
+        llvm::outs() << "Interface: " << F->getName() << "\n";
+        for(Function* io : io_send)
+        {
+            SVFModule* m = pag->getModule();
+            if(callgraph->isReachableBetweenFunctions(m->getSVFFunction(F), m->getSVFFunction(io)))
+            {
+                llvm::outs() << "    " << io->getName() << "\n";
+            }   
+        }
     }
 }

@@ -1,182 +1,257 @@
-======================= Global Variables =======================
-bt_err_ratelimited._rs	struct.ratelimit_state	{ Glob  }
-bt_sock_reclassify_lock.__key	struct.lock_class_key	{ Glob  }
-bt_proto_lock	struct.rwlock_t	{ Glob ln: 43 fl: net/bluetooth/af_bluetooth.c }
-bt_seq_ops	struct.seq_operations	{ Glob ln: 671 fl: net/bluetooth/af_bluetooth.c }
-___modver_attr	struct.module_version_attribute	{ Glob ln: 801 fl: net/bluetooth/af_bluetooth.c }
-bt_sock_family_ops	struct.net_proto_family	{ Glob ln: 708 fl: net/bluetooth/af_bluetooth.c }
-init_net	struct.net	{ Glob  }
-bt_link	struct.device_type.664	{ Glob ln: 17 fl: net/bluetooth/hci_sysfs.c }
-bt_host	struct.device_type.664	{ Glob ln: 90 fl: net/bluetooth/hci_sysfs.c }
-bt_sysfs_init.__key	struct.lock_class_key.81	{ Glob  }
-hci_sk_list	struct.bt_sock_list.2111	{ Glob ln: 149 fl: net/bluetooth/hci_sock.c }
-monitor_promisc	struct.atomic_t.1396	{ Glob ln: 44 fl: net/bluetooth/hci_sock.c }
-mgmt_chan_list_lock	struct.mutex.1408	{ Glob ln: 40 fl: net/bluetooth/hci_sock.c }
-mgmt_chan_list	struct.list_head.1407	{ Glob ln: 39 fl: net/bluetooth/hci_sock.c }
-hci_sock_family_ops	struct.net_proto_family.2112	{ Glob ln: 2023 fl: net/bluetooth/hci_sock.c }
-init_net	struct.net.1858	{ Glob  }
-hci_sk_proto		{ Glob ln: 1988 fl: net/bluetooth/hci_sock.c }
-hci_sock_ops	struct.proto_ops.1768	{ Glob ln: 1968 fl: net/bluetooth/hci_sock.c }
-sock_cookie_ida	struct.ida	{ Glob ln: 42 fl: net/bluetooth/hci_sock.c }
-init_uts_ns	struct.uts_namespace.1521	{ Glob  }
-hci_dev_list_lock	struct.rwlock_t.1401	{ Glob  }
-hci_dev_list	struct.list_head.1407	{ Glob  }
-hci_sec_filter	struct.hci_sec_filter	{ Glob ln: 128 fl: net/bluetooth/hci_sock.c }
-chan	struct.hci_mgmt_chan.2852	{ Glob ln: 7939 fl: net/bluetooth/mgmt.c }
-hci_dev_list_lock	struct.rwlock_t.2292	{ Glob  }
-hci_dev_list	struct.list_head.2124	{ Glob  }
-l2cap_sock_ops	struct.proto_ops.4285	{ Glob ln: 1648 fl: net/bluetooth/l2cap_sock.c }
-l2cap_proto	struct.proto.3935	{ Glob ln: 1581 fl: net/bluetooth/l2cap_sock.c }
-l2cap_sock_family_ops	struct.net_proto_family.4286	{ Glob ln: 1669 fl: net/bluetooth/l2cap_sock.c }
-init_net	struct.net.4039	{ Glob  }
-l2cap_sk_list	struct.bt_sock_list.4287	{ Glob ln: 40 fl: net/bluetooth/l2cap_sock.c }
-l2cap_chan_ops		{ Glob ln: 1470 fl: net/bluetooth/l2cap_sock.c }
-amp_mgr_list_lock	struct.mutex.4315	{ Glob ln: 20 fl: net/bluetooth/a2mp.c }
-amp_mgr_create.__key	struct.lock_class_key.4316	{ Glob  }
-amp_mgr_list	struct.list_head.4314	{ Glob ln: 19 fl: net/bluetooth/a2mp.c }
-a2mp_chan_ops	struct.l2cap_ops.5039	{ Glob ln: 734 fl: net/bluetooth/a2mp.c }
-hci_dev_list_lock	struct.rwlock_t.4639	{ Glob  }
-hci_dev_list	struct.list_head.4314	{ Glob  }
-rfcomm_dlc_alloc.__key	struct.lock_class_key.5042	{ Glob  }
-rfcomm_mutex	struct.mutex.5052	{ Glob ln: 47 fl: net/bluetooth/rfcomm/core.c }
-session_list	struct.list_head.5051	{ Glob ln: 52 fl: net/bluetooth/rfcomm/core.c }
-rfcomm_cb	struct.hci_cb	{ Glob ln: 2143 fl: net/bluetooth/rfcomm/core.c }
-param_ops_bool	struct.kernel_param_ops.5710	{ Glob  }
-__param_disable_cfc	struct.kernel_param.5712	{ Glob ln: 2234 fl: net/bluetooth/rfcomm/core.c }
-param_ops_int	struct.kernel_param_ops.5710	{ Glob  }
-__param_channel_mtu	struct.kernel_param.5712	{ Glob ln: 2237 fl: net/bluetooth/rfcomm/core.c }
-param_ops_uint	struct.kernel_param_ops.5710	{ Glob  }
-__param_l2cap_mtu	struct.kernel_param.5712	{ Glob ln: 2240 fl: net/bluetooth/rfcomm/core.c }
-__param_l2cap_ertm	struct.kernel_param.5712	{ Glob ln: 2243 fl: net/bluetooth/rfcomm/core.c }
-___modver_attr	struct.module_version_attribute.5771	{ Glob ln: 2248 fl: net/bluetooth/rfcomm/core.c }
-init_net	struct.net.5500	{ Glob  }
-rfcomm_wq	struct.wait_queue_head.5109	{ Glob ln: 106 fl: net/bluetooth/rfcomm/core.c }
-rfcomm_dlc_debugfs_fops	struct.file_operations.5739	{ Glob ln: 2170 fl: net/bluetooth/rfcomm/core.c }
-rfcomm_proto	struct.proto.6497	{ Glob ln: 268 fl: net/bluetooth/rfcomm/sock.c }
-rfcomm_sock_family_ops	struct.net_proto_family.6498	{ Glob ln: 1048 fl: net/bluetooth/rfcomm/sock.c }
-init_net	struct.net.6471	{ Glob  }
-rfcomm_sk_list	struct.bt_sock_list.6499	{ Glob ln: 39 fl: net/bluetooth/rfcomm/sock.c }
-rfcomm_sock_debugfs_fops	struct.file_operations.6228	{ Glob ln: 1023 fl: net/bluetooth/rfcomm/sock.c }
-rfcomm_sock_ops	struct.proto_ops.6489	{ Glob ln: 1027 fl: net/bluetooth/rfcomm/sock.c }
-tty_std_termios	struct.ktermios	{ Glob  }
-rfcomm_ops	struct.tty_operations	{ Glob ln: 1106 fl: net/bluetooth/rfcomm/tty.c }
-rfcomm_ioctl_mutex	struct.mutex.6564	{ Glob ln: 43 fl: net/bluetooth/rfcomm/tty.c }
-dev_attr_address	struct.device_attribute	{ Glob ln: 213 fl: net/bluetooth/rfcomm/tty.c }
-dev_attr_channel	struct.device_attribute	{ Glob ln: 214 fl: net/bluetooth/rfcomm/tty.c }
-rfcomm_dev_list	struct.list_head.6526	{ Glob ln: 72 fl: net/bluetooth/rfcomm/tty.c }
-rfcomm_dev_lock	struct.mutex.6564	{ Glob ln: 73 fl: net/bluetooth/rfcomm/tty.c }
-rfcomm_port_ops	struct.tty_port_operations	{ Glob ln: 142 fl: net/bluetooth/rfcomm/tty.c }
-features_fops	struct.file_operations.7960	{ Glob ln: 104 fl: net/bluetooth/hci_debugfs.c }
-device_id_fops	struct.file_operations.7960	{ Glob ln: 118 fl: net/bluetooth/hci_debugfs.c }
-device_list_fops	struct.file_operations.7960	{ Glob ln: 138 fl: net/bluetooth/hci_debugfs.c }
-blacklist_fops	struct.file_operations.7960	{ Glob ln: 153 fl: net/bluetooth/hci_debugfs.c }
-uuids_fops	struct.file_operations.7960	{ Glob ln: 178 fl: net/bluetooth/hci_debugfs.c }
-remote_oob_fops	struct.file_operations.7960	{ Glob ln: 197 fl: net/bluetooth/hci_debugfs.c }
-conn_info_min_age_fops	struct.file_operations.7960	{ Glob ln: 224 fl: net/bluetooth/hci_debugfs.c }
-conn_info_max_age_fops	struct.file_operations.7960	{ Glob ln: 252 fl: net/bluetooth/hci_debugfs.c }
-use_debug_keys_fops	struct.file_operations.7960	{ Glob ln: 267 fl: net/bluetooth/hci_debugfs.c }
-sc_only_mode_fops	struct.file_operations.7960	{ Glob ln: 285 fl: net/bluetooth/hci_debugfs.c }
-hardware_info_fops	struct.file_operations.7960	{ Glob ln: 291 fl: net/bluetooth/hci_debugfs.c }
-firmware_info_fops	struct.file_operations.7960	{ Glob ln: 292 fl: net/bluetooth/hci_debugfs.c }
-inquiry_cache_fops	struct.file_operations.7960	{ Glob ln: 361 fl: net/bluetooth/hci_debugfs.c }
-link_keys_fops	struct.file_operations.7960	{ Glob ln: 377 fl: net/bluetooth/hci_debugfs.c }
-dev_class_fops	struct.file_operations.7960	{ Glob ln: 391 fl: net/bluetooth/hci_debugfs.c }
-voice_setting_fops	struct.file_operations.7960	{ Glob ln: 404 fl: net/bluetooth/hci_debugfs.c }
-ssp_debug_mode_fops	struct.file_operations.7960	{ Glob ln: 419 fl: net/bluetooth/hci_debugfs.c }
-min_encrypt_key_size_fops	struct.file_operations.7960	{ Glob ln: 461 fl: net/bluetooth/hci_debugfs.c }
-auto_accept_delay_fops	struct.file_operations.7960	{ Glob ln: 476 fl: net/bluetooth/hci_debugfs.c }
-idle_timeout_fops	struct.file_operations.7960	{ Glob ln: 504 fl: net/bluetooth/hci_debugfs.c }
-sniff_min_interval_fops	struct.file_operations.7960	{ Glob ln: 532 fl: net/bluetooth/hci_debugfs.c }
-sniff_max_interval_fops	struct.file_operations.7960	{ Glob ln: 560 fl: net/bluetooth/hci_debugfs.c }
-identity_fops	struct.file_operations.7960	{ Glob ln: 611 fl: net/bluetooth/hci_debugfs.c }
-rpa_timeout_fops	struct.file_operations.7960	{ Glob ln: 641 fl: net/bluetooth/hci_debugfs.c }
-random_address_fops	struct.file_operations.7960	{ Glob ln: 655 fl: net/bluetooth/hci_debugfs.c }
-static_address_fops	struct.file_operations.7960	{ Glob ln: 668 fl: net/bluetooth/hci_debugfs.c }
-force_static_address_fops	struct.file_operations.7960	{ Glob ln: 706 fl: net/bluetooth/hci_debugfs.c }
-white_list_fops	struct.file_operations.7960	{ Glob ln: 726 fl: net/bluetooth/hci_debugfs.c }
-resolv_list_fops	struct.file_operations.7960	{ Glob ln: 741 fl: net/bluetooth/hci_debugfs.c }
-identity_resolving_keys_fops	struct.file_operations.7960	{ Glob ln: 759 fl: net/bluetooth/hci_debugfs.c }
-long_term_keys_fops	struct.file_operations.7960	{ Glob ln: 777 fl: net/bluetooth/hci_debugfs.c }
-conn_min_interval_fops	struct.file_operations.7960	{ Glob ln: 804 fl: net/bluetooth/hci_debugfs.c }
-conn_max_interval_fops	struct.file_operations.7960	{ Glob ln: 832 fl: net/bluetooth/hci_debugfs.c }
-conn_latency_fops	struct.file_operations.7960	{ Glob ln: 860 fl: net/bluetooth/hci_debugfs.c }
-supervision_timeout_fops	struct.file_operations.7960	{ Glob ln: 888 fl: net/bluetooth/hci_debugfs.c }
-adv_channel_map_fops	struct.file_operations.7960	{ Glob ln: 916 fl: net/bluetooth/hci_debugfs.c }
-adv_min_interval_fops	struct.file_operations.7960	{ Glob ln: 944 fl: net/bluetooth/hci_debugfs.c }
-adv_max_interval_fops	struct.file_operations.7960	{ Glob ln: 972 fl: net/bluetooth/hci_debugfs.c }
-auth_payload_timeout_fops	struct.file_operations.7960	{ Glob ln: 1000 fl: net/bluetooth/hci_debugfs.c }
-quirk_strict_duplicate_filter_fops	struct.file_operations.7960	{ Glob ln: 1004 fl: net/bluetooth/hci_debugfs.c }
-quirk_simultaneous_discovery_fops	struct.file_operations.7960	{ Glob ln: 1006 fl: net/bluetooth/hci_debugfs.c }
-__init_completion.__key	struct.lock_class_key.7982	{ Glob  }
-hci_dev_list	struct.list_head.8005	{ Glob ln: 51 fl: net/bluetooth/hci_core.c }
-hci_dev_list_lock	struct.rwlock_t.8011	{ Glob ln: 52 fl: net/bluetooth/hci_core.c }
-hci_cb_list	struct.list_head.8005	{ Glob ln: 55 fl: net/bluetooth/hci_core.c }
-hci_cb_list_lock	struct.mutex.8017	{ Glob ln: 56 fl: net/bluetooth/hci_core.c }
-hci_alloc_dev.__key	struct.lock_class_key.8018	{ Glob  }
-hci_alloc_dev.__key.2	struct.lock_class_key.8018	{ Glob  }
-hci_alloc_dev.__key.4	struct.lock_class_key.8018	{ Glob  }
-hci_index_ida	struct.ida.8020	{ Glob ln: 59 fl: net/bluetooth/hci_core.c }
-hci_rfkill_ops	struct.rfkill_ops	{ Glob ln: 2149 fl: net/bluetooth/hci_core.c }
-dut_mode_fops	struct.file_operations.8698	{ Glob ln: 112 fl: net/bluetooth/hci_core.c }
-vendor_diag_fops	struct.file_operations.8698	{ Glob ln: 168 fl: net/bluetooth/hci_core.c }
-hci_dev_list_lock	struct.rwlock_t.8753	{ Glob  }
-hci_dev_list	struct.list_head.8754	{ Glob  }
-le_min_key_size_fops	struct.file_operations.10191	{ Glob ln: 3401 fl: net/bluetooth/smp.c }
-le_max_key_size_fops	struct.file_operations.10191	{ Glob ln: 3445 fl: net/bluetooth/smp.c }
-force_bredr_smp_fops	struct.file_operations.10191	{ Glob ln: 3357 fl: net/bluetooth/smp.c }
-smp_root_chan_ops	struct.l2cap_ops.10208	{ Glob ln: 3196 fl: net/bluetooth/smp.c }
-smp_chan_ops	struct.l2cap_ops.10208	{ Glob ln: 3149 fl: net/bluetooth/smp.c }
-__const.sc_generate_link_key.salt		{ Glob  }
-__const.sc_generate_ltk.salt		{ Glob  }
-hci_dev_list_lock	struct.rwlock_t.10232	{ Glob  }
-hci_dev_list	struct.list_head.10233	{ Glob  }
-hci_cb_list_lock	struct.mutex.10239	{ Glob  }
-hci_cb_list	struct.list_head.10233	{ Glob  }
-hidp_hid_driver		{ Glob ln: 742 fl: net/bluetooth/hidp/core.c }
-hidp_session_sem	struct.rw_semaphore.11737	{ Glob ln: 38 fl: net/bluetooth/hidp/core.c }
-hidp_session_list	struct.list_head.11699	{ Glob ln: 40 fl: net/bluetooth/hidp/core.c }
-___modver_attr	struct.module_version_attribute.12396	{ Glob ln: 1478 fl: net/bluetooth/hidp/core.c }
-hidp_session_new.__key	struct.lock_class_key.11982	{ Glob  }
-hidp_session_new.__key.2	struct.lock_class_key.11982	{ Glob  }
-hidp_session_new.__key.4	struct.lock_class_key.11982	{ Glob  }
-hidp_session_wq	struct.wait_queue_head.11771	{ Glob ln: 39 fl: net/bluetooth/hidp/core.c }
-hidp_proto	struct.proto.13112	{ Glob ln: 244 fl: net/bluetooth/hidp/sock.c }
-hidp_sock_family_ops	struct.net_proto_family.13113	{ Glob ln: 280 fl: net/bluetooth/hidp/sock.c }
-init_net	struct.net.13087	{ Glob  }
-hidp_sk_list	struct.bt_sock_list.13114	{ Glob ln: 28 fl: net/bluetooth/hidp/sock.c }
-hidp_sock_ops	struct.proto_ops.13104	{ Glob ln: 222 fl: net/bluetooth/hidp/sock.c }
-bnep_session_sem	struct.rw_semaphore.13127	{ Glob ln: 46 fl: net/bluetooth/bnep/core.c }
-bnep_type	struct.device_type.13836	{ Glob ln: 552 fl: net/bluetooth/bnep/core.c }
-bnep_session_list	struct.list_head.13126	{ Glob ln: 45 fl: net/bluetooth/bnep/core.c }
-param_ops_bool	struct.kernel_param_ops.13171	{ Glob  }
-__param_compress_src	struct.kernel_param.13173	{ Glob ln: 759 fl: net/bluetooth/bnep/core.c }
-__param_compress_dst	struct.kernel_param.13173	{ Glob ln: 762 fl: net/bluetooth/bnep/core.c }
-___modver_attr	struct.module_version_attribute.13837	{ Glob ln: 767 fl: net/bluetooth/bnep/core.c }
-bnep_proto	struct.proto.14575	{ Glob ln: 193 fl: net/bluetooth/bnep/sock.c }
-bnep_sock_family_ops	struct.net_proto_family.14576	{ Glob ln: 228 fl: net/bluetooth/bnep/sock.c }
-init_net	struct.net.14549	{ Glob  }
-bnep_sk_list	struct.bt_sock_list.14577	{ Glob ln: 32 fl: net/bluetooth/bnep/sock.c }
-bnep_sock_ops	struct.proto_ops.14567	{ Glob ln: 171 fl: net/bluetooth/bnep/sock.c }
-bnep_netdev_ops		{ Glob ln: 206 fl: net/bluetooth/bnep/netdev.c }
-sco_sk_list	struct.bt_sock_list.16002	{ Glob ln: 40 fl: net/bluetooth/sco.c }
-sco_proto	struct.proto.15631	{ Glob ln: 463 fl: net/bluetooth/sco.c }
-sco_sock_family_ops	struct.net_proto_family.16003	{ Glob ln: 1201 fl: net/bluetooth/sco.c }
-init_net	struct.net.15748	{ Glob  }
-sco_cb	struct.hci_cb.16016	{ Glob ln: 1154 fl: net/bluetooth/sco.c }
-sco_debugfs_fops	struct.file_operations.15987	{ Glob ln: 1176 fl: net/bluetooth/sco.c }
-param_ops_bool	struct.kernel_param_ops.15921	{ Glob  }
-__param_disable_esco	struct.kernel_param.15923	{ Glob ln: 1260 fl: net/bluetooth/sco.c }
-sco_sock_ops	struct.proto_ops.15658	{ Glob ln: 1180 fl: net/bluetooth/sco.c }
-hci_cb_list_lock	struct.mutex.16028	{ Glob  }
-hci_cb_list	struct.list_head.16027	{ Glob  }
-chan_list_lock	struct.rwlock_t.16776	{ Glob ln: 52 fl: net/bluetooth/l2cap_core.c }
-l2cap_chan_create.__key	struct.lock_class_key.16777	{ Glob  }
-chan_list	struct.list_head.16778	{ Glob ln: 51 fl: net/bluetooth/l2cap_core.c }
-l2cap_cb	struct.hci_cb.17505	{ Glob ln: 7685 fl: net/bluetooth/l2cap_core.c }
-l2cap_debugfs_fops	struct.file_operations.17219	{ Glob ln: 7711 fl: net/bluetooth/l2cap_core.c }
-param_ops_bool	struct.kernel_param_ops.17152	{ Glob  }
-__param_disable_ertm	struct.kernel_param.17154	{ Glob ln: 7741 fl: net/bluetooth/l2cap_core.c }
-l2cap_conn_add.__key	struct.lock_class_key.16777	{ Glob  }
-l2cap_conn_add.__key.12	struct.lock_class_key.16777	{ Glob  }
-hci_dev_list_lock	struct.rwlock_t.16776	{ Glob  }
-hci_dev_list	struct.list_head.16778	{ Glob  }
+
+*********CallGraph Stats***************
+################ (program : bluetooth.bc)###############
+-------------------------------------------------------
+CalRetPairInCycle   27
+TotalEdge           9068
+MaxNodeInCycle      6
+NodeInCycle         10
+TotalCycle          4
+TotalNode           1215
+#######################################################
+
+*********General Stats***************
+################ (program : bluetooth.bc)###############
+BBWith3Succ         316
+CopysNum            7932
+MaxStructSize       478
+AddrsNum            3643
+FSObjNum            2274
+FIObjNum            132
+ConstArrayObj       2
+StoresNum           10749
+ConstStructObj      122
+TotalPTASVFStmts    43298
+NonPtrObj           1925
+GepsNum             21289
+TotalObjects        2407
+FunctionObjs        1215
+CallsNum            7771
+TotalCallSite       11018
+ReturnsNum          1351
+TotalFieldObjects   4153
+GlobalObjs          250
+LoadsNum            10755
+LocalVarInRecur     15
+HeapObjs            0
+StackObjs           940
+VarStructObj        645
+VarArrayObj         131
+BBWith2Succ         6889
+ConstantObj         0
+TotalPointers       124379
+TotalSVFStmts       90513
+IndCallSites        2056
+-------------------------------------------------------
+#######################################################
+
+*********Constraint Graph Stats***************
+################ (program : bluetooth.bc)###############
+-------------------------------------------------------
+AvgIn/OutEdge       1.1709
+AvgIn/OutAddrEdge   0.0698501
+AvgIn/OutLoadEdge   0.0976627
+AvgIn/OutCopyEdge   0.896279
+MaxInAddrEdge       1
+MaxOutStoreEdge     1915
+NumOfCGNode         136502
+TotalValidNode      40773
+AvgIn/OutStoreEdge  0
+TotalValidObjNode   4752
+NumOfGeps           21229
+NumOfCGEdge         44893
+NumOfAddrs          2848
+MaxOutAddrEdge      450
+NumOfLoads          3982
+NumOfStores         4367
+MaxOutLoadEdge      62
+NumOfCopys          15315
+MaxOutCopyEdge      2589
+MaxInStoreEdge      185
+MaxInLoadEdge       73
+MaxInCopyEdge       185
+#######################################################
+
+*********Andersen Pointer Analysis Stats***************
+################ (program : bluetooth.bc)###############
+-------------------------------------------------------
+AvgTopLvlPtsSize    4.24352
+CopyGepTime         0
+CollapseTime        0
+AvgPtsSetSize       1.16699
+UpdateCGTime        0
+LoadStoreTime       0
+SCCMergeTime        0
+SCCDetectTime       0
+TotalTime           6.103
+NullPointer         9081
+PointsToBlkPtr      0
+NodesInCycles       127
+PointsToConstPtr    185
+TotalPWCCycleNum    13
+NumOfSCCDetect      14
+TotalCycleNum       42
+IndEdgeSolved       90
+MaxNodesInSCC       7
+IndCallSites        2056
+MaxPtsSetSize       149
+DYFieldObjs         4153
+DYFieldPtrs         832
+MemObjects          2407
+Pointers            123547
+NumOfFieldExpand    0
+Iterations          14
+NumOfSFRs           0
+StoreProcessed      4784
+GepProcessed        15656
+LoadProcessed       7666
+CopyProcessed       15945
+AddrProcessed       2855
+TotalObjects        6560
+TotalPointers       124379
+#######################################################
+****Persistent Points-To Cache Statistics: bv-finalize****
+UniquePointsToSets       7497
+TotalUnions              38521
+PropertyUnions           25633
+UniqueUnions             1056
+LookupUnions             9768
+PreemptiveUnions         2064
+TotalComplements         1910116
+PropertyComplements      1901263
+UniqueComplements        228
+LookupComplements        8397
+PreemptiveComplements    228
+TotalIntersections       6568
+PropertyIntersections    6064
+UniqueIntersections      4
+LookupIntersections      41
+PreemptiveIntersections  459
+8
+hci_sock_release
+hci_sock_bind
+hci_sock_getname
+datagram_poll
+hci_sock_ioctl
+hci_sock_setsockopt
+hci_sock_getsockopt
+hci_sock_sendmsg
+hci_sock_recvmsg
+rfcomm_sock_release
+rfcomm_sock_bind
+rfcomm_sock_connect
+rfcomm_sock_accept
+rfcomm_sock_getname
+rfcomm_sock_ioctl
+sock_gettstamp
+rfcomm_sock_listen
+rfcomm_sock_shutdown
+rfcomm_sock_setsockopt
+rfcomm_sock_getsockopt
+rfcomm_sock_sendmsg
+rfcomm_sock_recvmsg
+hidp_sock_release
+hidp_sock_ioctl
+hidp_sock_compat_ioctl
+bnep_sock_release
+bnep_sock_ioctl
+bnep_sock_compat_ioctl
+sco_sock_release
+sco_sock_bind
+sco_sock_connect
+sco_sock_accept
+sco_sock_getname
+sock_gettstamp
+sco_sock_listen
+sco_sock_shutdown
+sco_sock_setsockopt
+sco_sock_getsockopt
+sco_sock_sendmsg
+sco_sock_recvmsg
+l2cap_sock_release
+l2cap_sock_bind
+l2cap_sock_connect
+l2cap_sock_accept
+l2cap_sock_getname
+sock_gettstamp
+l2cap_sock_listen
+l2cap_sock_shutdown
+l2cap_sock_setsockopt
+l2cap_sock_getsockopt
+l2cap_sock_sendmsg
+l2cap_sock_recvmsg
+Interface: hci_sock_release
+    hci_req_add
+Interface: hci_sock_bind
+    hci_req_add
+Interface: hci_sock_getname
+Interface: datagram_poll
+Interface: hci_sock_ioctl
+    hci_req_add
+Interface: hci_sock_setsockopt
+Interface: hci_sock_getsockopt
+Interface: hci_sock_sendmsg
+Interface: hci_sock_recvmsg
+Interface: rfcomm_sock_release
+Interface: rfcomm_sock_bind
+Interface: rfcomm_sock_connect
+    hci_send_cmd
+    hci_send_acl
+    hci_req_add
+Interface: rfcomm_sock_accept
+Interface: rfcomm_sock_getname
+Interface: rfcomm_sock_ioctl
+Interface: sock_gettstamp
+Interface: rfcomm_sock_listen
+Interface: rfcomm_sock_shutdown
+Interface: rfcomm_sock_setsockopt
+Interface: rfcomm_sock_getsockopt
+Interface: rfcomm_sock_sendmsg
+Interface: rfcomm_sock_recvmsg
+    hci_send_cmd
+Interface: hidp_sock_release
+Interface: hidp_sock_ioctl
+Interface: hidp_sock_compat_ioctl
+Interface: bnep_sock_release
+Interface: bnep_sock_ioctl
+Interface: bnep_sock_compat_ioctl
+Interface: sco_sock_release
+Interface: sco_sock_bind
+Interface: sco_sock_connect
+    hci_send_cmd
+Interface: sco_sock_accept
+Interface: sco_sock_getname
+Interface: sock_gettstamp
+Interface: sco_sock_listen
+Interface: sco_sock_shutdown
+Interface: sco_sock_setsockopt
+Interface: sco_sock_getsockopt
+Interface: sco_sock_sendmsg
+    hci_send_sco
+Interface: sco_sock_recvmsg
+    hci_send_cmd
+Interface: l2cap_sock_release
+    hci_send_cmd
+    hci_send_acl
+Interface: l2cap_sock_bind
+Interface: l2cap_sock_connect
+    hci_send_cmd
+    hci_send_acl
+    hci_req_add
+Interface: l2cap_sock_accept
+Interface: l2cap_sock_getname
+Interface: sock_gettstamp
+Interface: l2cap_sock_listen
+Interface: l2cap_sock_shutdown
+    hci_send_cmd
+    hci_send_acl
+Interface: l2cap_sock_setsockopt
+    hci_send_cmd
+    hci_send_acl
+    hci_req_add
+Interface: l2cap_sock_getsockopt
+Interface: l2cap_sock_sendmsg
+    hci_send_acl
+    hci_req_add
+Interface: l2cap_sock_recvmsg
+    hci_send_acl
