@@ -8,27 +8,35 @@
 
 using namespace SVF;
 
-BTAnalyzer::BTAnalyzer(SVFModule* svfModule)
+BTAnalyzer::BTAnalyzer(SVF::SVFModule* m)
 {
-    // Initialize io_read/io_recv functions
-    Module* m = LLVMModuleSet::getLLVMModuleSet()->getModule(0);
-    assert(m->getFunction("hci_send_cmd") != nullptr);
-    assert(m->getFunction("hci_send_sco") != nullptr);
-    assert(m->getFunction("hci_send_acl") != nullptr);
-    assert(m->getFunction("hci_req_add") != nullptr);
+    assert(m != nullptr && "SVFModule must be built first.");
+    svfM = m;
+    llvmM = LLVMModuleSet::getLLVMModuleSet()->getModule(0);
+}
 
-    io_send.push_back(m->getFunction("hci_send_cmd"));
-    io_send.push_back(m->getFunction("hci_send_sco"));
-    io_send.push_back(m->getFunction("hci_send_acl"));
-    io_send.push_back(m->getFunction("hci_req_add"));
+void BTAnalyzer::run()
+{
+    initialize();
+    analyze();
+}
 
+void BTAnalyzer::initialize()
+{
+    extractAPI();
+    extractHCI();
+    buildSummaryInfo();
+}
 
-    // Build ICFG, PAG, CallGraph
+void BTAnalyzer::buildSummaryInfo()
+{
     SVFIRBuilder builder;
-    pag = builder.build(svfModule);
+    pag = builder.build(svfM);
     icfg = pag->getICFG();
-    AndersenWaveDiff* ander = AndersenWaveDiff::createAndersenWaveDiff(pag);
-    callgraph = ander->getPTACallGraph();    
+    // AndersenWaveDiff* ander = AndersenWaveDiff::createAndersenWaveDiff(pag);
+    // callgraph = ander->getPTACallGraph();   
+    // SVFGBuilder memSSA;
+    // svfg = memSSA.buildFullSVFG(ander);
 }
 
 void BTAnalyzer::printGlobals()
@@ -62,55 +70,5 @@ void BTAnalyzer::printFunctions()
         std::string Loc = SVFUtil::getSourceLoc(F);
         bool def = !F->isDeclaration();
         cout << Name << "\t" << def << "\t" << Loc << endl;
-    }
-}
-
-void BTAnalyzer::extractInterface()
-{
-    SVFModule* mod = pag->getModule();
-    cout << llvm::Value::ConstantStructVal<<endl; 
-    for(auto it=mod->global_begin(),eit=mod->global_end();it!=eit;++it)
-    {
-        GlobalVariable* gvar = *it;
-        Type* ty = gvar->getType()->getPointerElementType();
-        if(ty->isStructTy() && gvar->hasInitializer()){
-            std::string name = ty->getStructName().str();
-            if(name.find("struct.proto_ops") != name.npos){
-                ConstantStruct* cs = SVFUtil::dyn_cast<ConstantStruct>(gvar->getInitializer());
-                if(!cs)
-                    continue;
-                int n = cs->getNumOperands();
-                for(int i=0;i<n;i++){
-                    Constant* field = cs->getOperand(i);
-                    if(Function* f = SVFUtil::dyn_cast<Function>(field)){
-                        std::string name = f->getName().str();
-                        if(name.find("sock_no") == name.npos)
-                            interfaces.push_back(f);
-                    }
-                }
-            }
-        }
-    }
-    for(const Function* F:interfaces){
-        llvm::outs() << F->getName() << "\n";
-    }
-}
-
-void BTAnalyzer::analyze()
-{
-    if(interfaces.empty())
-        extractInterface();
-
-    for(Function* F : interfaces)
-    {
-        llvm::outs() << "Interface: " << F->getName() << "\n";
-        for(Function* io : io_send)
-        {
-            SVFModule* m = pag->getModule();
-            if(callgraph->isReachableBetweenFunctions(m->getSVFFunction(F), m->getSVFFunction(io)))
-            {
-                llvm::outs() << "    " << io->getName() << "\n";
-            }   
-        }
     }
 }

@@ -26,7 +26,7 @@
  // Author: Yulei Sui,
  */
 
-#include "Bluetooth/BTAnalyzer.h"
+#include "Bluetooth/BlueKitchenAnalyzer.h"
 #include "SVF-FE/LLVMUtil.h"
 #include "WPA/WPAPass.h"
 #include "Util/Options.h"
@@ -54,8 +54,9 @@ int main(int argc, char** argv)
     SVFModule* svfModule = LLVMModuleSet::getLLVMModuleSet()->buildSVFModule(moduleNameVec);
     svfModule->buildSymbolTableInfo();
 
-    BTAnalyzer bt(svfModule);
-    bt.analyze();
+    BlueKitchenAnalyzer bt(svfModule);
+    bt.run();
+    // bt.analyze();
     // bt.printGlobals();
     //bt.printFunctions();
 
