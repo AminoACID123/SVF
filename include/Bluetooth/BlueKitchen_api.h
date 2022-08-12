@@ -40,12 +40,52 @@ std::list<llvm::StringRef> BlueKitchen_API = {
     "gatt_server_get_client_configuration_handle_for_characteristic_with_uuid128",
     //@}
 
+
+    /// att_db_util.h
+    //@{
+    "att_db_util_init",
+    "att_db_util_add_service_uuid16",
+    "att_db_util_add_service_uuid128",
+    "att_db_util_add_secondary_service_uuid16",
+    "att_db_util_add_secondary_service_uuid128",
+    "att_db_util_add_included_service_uuid16",
+    "att_db_util_add_characteristic_uuid16",
+    "att_db_util_add_characteristic_uuid128",
+    "att_db_util_add_descriptor_uuid16",
+    "att_db_util_add_descriptor_uuid128",
+    "att_db_util_get_address",
+    "att_db_util_get_size",
+    "att_db_util_hash_len",
+    "att_db_util_hash_init",
+    "att_db_util_hash_get_next",
+    "att_db_util_hash_calc",
+    //@}
+
+
+    /// att_server.h
+    //@{
+    "att_server_init",
+    "att_server_register_packet_handler",
+    "att_server_register_service_handler",
+    "att_server_register_can_send_now_callback",
+    "att_server_get_mtu",
+    "att_server_request_to_send_notification",
+    "att_server_request_to_send_indication",
+    "att_server_notify",
+    "att_server_indicate",
+    "att_server_response_ready",
+    "att_server_can_send_packet_now",
+    "att_server_request_can_send_now_event",
+    //@}
+
+
     /// pan.h
     //@{
     "pan_create_panu_sdp_record",
     "pan_create_gn_sdp_record",
     "pan_create_nap_sdp_record"
     //@}
+
 
     /// gap.h
     //@{

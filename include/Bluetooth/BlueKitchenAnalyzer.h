@@ -7,6 +7,12 @@ class BlueKitchenAnalyzer : public BTAnalyzer
 
     void analyze();
 
+    void analyzeEventHandler(Function* F);
+
+    void analyzeACLHandler(Function* F);
+
+    void analyzeSCOHandler(Function* F);
+
     void extractHCI();
 
     void extractAPI();

@@ -17,10 +17,25 @@ void BlueKitchenAnalyzer::extractHCI()
         llvmM->getFunction("hci_send_acl_packet_fragments"),
         llvmM->getFunction("hci_send_sco_packet_buffer"),
     };
-    assert(HCI[0] && HCI[1] && HCI[2]);
+    // assert(HCI[0] && HCI[1] && HCI[2]);
     hci_send.push_back(HCI[0]);
     hci_send.push_back(HCI[1]);
     hci_send.push_back(HCI[2]);
+
+    Function* F = llvmM->getFunction("hci_init");
+    for (inst_iterator II = inst_begin(F), E = inst_end(F); II != E; ++II)
+    {
+        Instruction *inst = &*II;
+        if(SVFUtil::isa<CallInst>(inst) && !SVFUtil::isIntrinsicInst(inst)){
+            CallInst* call = SVFUtil::dyn_cast<CallInst>(inst);
+            if(!call->getCalledFunction()){
+                Function* recv = SVFUtil::dyn_cast<Function>(call->getArgOperand(0));
+                hci_recv.push_back(recv);
+                break;
+            }
+        }
+    }
+
     // GlobalVariable* hci = llvmM->getGlobalVariable("hci_stack", true);
     // assert(hci != nullptr);
 
@@ -57,7 +72,8 @@ void BlueKitchenAnalyzer::extractAPI()
     {
         Function* F = llvmM->getFunction(name);
         if(F == nullptr){
-            llvm::outs() << "API not found: " << name << "\n";
+            // llvm::outs() << "API not found: " << name << "\n";
+            continue;
         }
         else{
             interfaces.push_back(F);
@@ -67,19 +83,65 @@ void BlueKitchenAnalyzer::extractAPI()
 
 void BlueKitchenAnalyzer::analyze()
 {
-    PTACallGraph* cg = new PTACallGraph();
-    CallGraphBuilder cgbuilder = CallGraphBuilder(cg, icfg);
-    callgraph = cgbuilder.buildCallGraph(svfM);
+    // PTACallGraph* cg = new PTACallGraph();
+    // CallGraphBuilder cgbuilder = CallGraphBuilder(cg, icfg);
+    // callgraph = cgbuilder.buildCallGraph(svfM);
 
-    for(Function* F : interfaces)
+    // Function* handler = llvmM->getFunction("hci_add_event_handler");
+    // for(Function* F : interfaces)
+    // {
+    //     const SVFFunction* src = svfM->getSVFFunction(F);
+    //     const SVFFunction* dst = svfM->getSVFFunction(handler);
+    //     if(callgraph->isReachableBetweenFunctions(src, dst)){
+    //         llvm::outs() << src->getName() << " : " << dst->getName() << "\n";
+    //     }
+    // }
+
+    Function* recv = hci_recv.front();
+    SwitchInst* dispatcher = nullptr;
+    for (inst_iterator II = inst_begin(recv), E = inst_end(recv); II != E; ++II)
     {
-        for(Function* hci : hci_send)
+        Instruction* inst = &*II;
+        dispatcher = SVFUtil::dyn_cast<SwitchInst>(inst);
+        if(dispatcher!= nullptr)
+            break;
+    }
+
+    for(SwitchInst::CaseHandle c : dispatcher->cases())
+    {
+        int cond = c.getCaseValue()->getZExtValue();
+        BasicBlock* BB = c.getCaseSuccessor();
+        for (auto II = BB->begin(), E = BB->end(); II != E; ++II)
         {
-            const SVFFunction* src = svfM->getSVFFunction(F);
-            const SVFFunction* dst = svfM->getSVFFunction(hci);
-            if(callgraph->isReachableBetweenFunctions(src, dst)){
-                llvm::outs() << src->getName() << " : " << dst->getName() << "\n";
+            Instruction* inst = &*II;
+            CallInst* call = SVFUtil::dyn_cast<CallInst>(inst);
+            if(call != nullptr && !SVFUtil::isIntrinsicInst(inst)){
+                Function* callee = call->getCalledFunction();
+                switch (cond)
+                {
+                    case HCI_EVENT_PACKET: analyzeEventHandler(callee);break;
+                    case HCI_ACL_DATA_PACKET: analyzeACLHandler(callee);break;
+                    case HCI_SCO_DATA_PACKET: analyzeSCOHandler(callee);break;   
+                    default:
+                        break;
+                }
             }
         }
+    }
+}
+
+void BlueKitchenAnalyzer::analyzeEventHandler(Function* F)
+{
+    SwitchInst* dispatcher = nullptr;
+    for (inst_iterator II = inst_begin(F), E = inst_end(F); II != E; ++II)
+    {
+        Instruction* inst = &*II;
+        dispatcher = SVFUtil::dyn_cast<SwitchInst>(inst);
+        if(dispatcher != nullptr)
+            break;
+    }    
+    for(SwitchInst::CaseHandle c : dispatcher->cases())
+    {
+        int cond = c.getCaseValue()->getZExtValue();
     }
 }
